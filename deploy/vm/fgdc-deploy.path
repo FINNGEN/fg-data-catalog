@@ -1,0 +1,11 @@
+# NOTE(Claude Opus 5.5 2026-11-18): runs fgdc-deploy.service whenever a file
+# lands in /srv/fgdc/incoming (fgdc-deploy always empties it).
+[Unit]
+Description=Watch for FinnGen data catalog releases
+
+[Path]
+DirectoryNotEmpty=/srv/fgdc/incoming
+Unit=fgdc-deploy.service
+
+[Install]
+WantedBy=multi-user.target

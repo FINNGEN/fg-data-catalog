@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# NOTE(Claude Opus 5.5 2026-11-18): runs a release tarball (by default the
+# newest one) on a plain Debian 13 arm64 container, with a copy of a database
+# (default: the dev one), through the same calls as fgdc-deploy: backup,
+# rollback_for, migrate_and_verify, start, then a few requests.
+#
+#   deploy/test/smoke [TARBALL] [DATABASE]
+set -euo pipefail
+
+MACHINE=${FGDC_BUILD_MACHINE:-fgdc-build}
+REPO=$(cd "$(dirname "$0")/../.." && pwd)
+TARBALL=${1:-$(ls -t "$REPO"/_build/deploy/fg_data_catalog-*.tar.zst 2>/dev/null | head -1)}
+DATABASE=${2:-$REPO/fg_data_catalog_dev.db}
+[ -f "$TARBALL" ] || { echo "smoke: no tarball (deploy/fgdc build)" >&2; exit 1; }
+[ -f "$DATABASE" ] || { echo "smoke: no database $DATABASE" >&2; exit 1; }
+
+IN=$(mktemp -d "$REPO/_build/smoke.XXXXXX")
+cp "$TARBALL" "$IN/release.tar.zst"
+sqlite3 "$DATABASE" "VACUUM INTO '$IN/db.db'"
+
+cat > "$IN/smoke.sh" <<'EOF'
+set -e
+apt-get update -qq > /dev/null
+apt-get install -y -qq zstd curl libstdc++6 libncurses6 libssl3t64 libsctp1 > /dev/null 2>&1
+mkdir -p /r /data
+tar --zstd -xf /in/release.tar.zst -C /r
+cp /in/db.db /data/db.db
+export PHX_SERVER=true PHX_HOST=catalog.example.org PORT=4994 DATABASE_PATH=/data/db.db \
+  SECRET_KEY_BASE=$(head -c 48 /dev/urandom | base64 -w0) GOOGLE_CLIENT_ID=test \
+  GOOGLE_CLIENT_SECRET=test LANG=C.UTF-8
+echo "Release $(cat /r/RELEASE_ID) on $(uname -m)"
+app=/r/bin/fg_data_catalog
+$app eval 'FGDataCatalog.Release.backup("/data/backup.db")'
+$app eval "FGDataCatalog.Release.rollback_for(\"$(echo /r/lib/fg_data_catalog-*/priv/repo/migrations)\")"
+$app eval 'FGDataCatalog.Release.migrate_and_verify()'
+$app start > /tmp/app.log 2>&1 &
+for _ in $(seq 120); do curl -fs -o /tmp/page.html http://127.0.0.1:4994/ && break; sleep 1; done
+fail() { echo "FAILED: $*"; tail -30 /tmp/app.log; exit 1; }
+grep -q '<title' /tmp/page.html || fail "the catalog page does not answer"
+css=$(grep -o '/assets/css/app-[^"]*\.css' /tmp/page.html | head -1)
+[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:4994$css")" = 200 ] || fail "no digested CSS"
+[ "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: catalog.example.org' \
+  -H 'X-Forwarded-Proto: https' http://127.0.0.1:4994/)" = 200 ] || fail "not served behind the proxy"
+[ "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: catalog.example.org' \
+  http://127.0.0.1:4994/)" = 301 ] || fail "plain http is not redirected to https"
+echo "OK: catalog page, digested assets, proxy headers, https redirect"
+EOF
+
+CONTAINER_CONNECTION=$MACHINE podman run --rm --platform linux/arm64 -v "$IN:/in:ro" \
+  docker.io/library/debian:trixie-slim bash /in/smoke.sh 2>&1 | grep -v -e ESOCK -e sctp -e '^$'
+status=${PIPESTATUS[0]}
+rm -f "$IN"/release.tar.zst "$IN"/db.db "$IN"/smoke.sh
+rmdir "$IN"
+exit "$status"

@@ -1,0 +1,14 @@
+# NOTE(Claude Opus 5.5 2026-11-18): a stand-in for the production VM (Debian 13,
+# arm64, systemd, sshd), to try the deploy scripts on the Mac: see
+# deploy/test/vm.
+FROM docker.io/library/debian:trixie
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends systemd systemd-sysv dbus openssh-server sudo \
+  && rm -rf /var/lib/apt/lists/* \
+  && useradd --create-home --shell /bin/bash deployer \
+  && echo 'deployer ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/deployer \
+  && mkdir -p /home/deployer/.ssh
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

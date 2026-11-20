@@ -1,0 +1,55 @@
+# NOTE(Claude Opus 5.5 2026-11-18): builds the release for the production VM
+# (GCP N4A, Debian 13 "trixie", arm64) and outputs only its tarball,
+# `fg_data_catalog-<RELEASE_ID>.tar.zst`. Run by `deploy/fgdc build`:
+#
+#   podman build --platform linux/arm64 -f deploy/Containerfile -t ... \
+#     --build-arg RELEASE_ID=... .
+#
+# The image matches the local Elixir and OTP, on the VM's Debian release (the
+# release bundles the Erlang runtime, linked against trixie's libraries; it
+# would not start on an older Debian, whose glibc is older).
+# arm64 is also an Apple Silicon Mac's own platform: no emulation.
+ARG BUILDER_IMAGE=docker.io/hexpm/elixir:1.20.5-erlang-29.1.2-debian-trixie-20261104-slim
+
+FROM ${BUILDER_IMAGE} AS build
+
+# NOTE(Claude Opus 5.5 2026-11-18): git for the `heroicons` dependency (a
+# GitHub repository), zstd for the tarball.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends build-essential git zstd ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV MIX_ENV=prod LANG=C.UTF-8
+RUN mix local.hex --force && mix local.rebar --force
+
+# NOTE(Claude Opus 5.5 2026-11-18): _build is a cache mount, kept by the
+# build machine across builds, so that `mix compile` only redoes what
+# changed. Its contents are not in the image: every step that needs them
+# mounts it. Its id names the Debian release: change it with BUILDER_IMAGE's
+# Debian, so that nothing built on the old one is reused. Dependencies
+# first, in layers of their own.
+COPY mix.exs mix.lock ./
+RUN mix deps.get --only prod
+COPY config/config.exs config/prod.exs config/
+RUN --mount=type=cache,id=fgdc-build-trixie-arm64,target=/app/_build,sharing=locked \
+  mix deps.compile && mix esbuild.install --if-missing
+
+COPY priv priv
+COPY lib lib
+COPY assets assets
+COPY config/runtime.exs config/
+ARG RELEASE_ID
+# NOTE(Claude Opus 5.5 2026-11-18): compile before the assets: the colocated
+# hooks are extracted by the compiler. The previous release is removed
+# first, so that none of its files end up in the new one.
+RUN --mount=type=cache,id=fgdc-build-trixie-arm64,target=/app/_build,sharing=locked \
+  test -n "$RELEASE_ID" \
+  && mix compile \
+  && mix assets.deploy \
+  && rm -rf _build/prod/rel \
+  && mix release \
+  && echo "$RELEASE_ID" > _build/prod/rel/fg_data_catalog/RELEASE_ID \
+  && tar --zstd -cf "/fg_data_catalog-$RELEASE_ID.tar.zst" -C _build/prod/rel/fg_data_catalog .
+
+FROM scratch
+COPY --from=build /fg_data_catalog-*.tar.zst /

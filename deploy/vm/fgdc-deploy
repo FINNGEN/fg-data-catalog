@@ -1,0 +1,399 @@
+#!/usr/bin/env bash
+# NOTE(Claude Opus 5.5 2026-11-18): deploys and rolls back the catalog on the
+# production VM (see deploy/README.md). Installed as /srv/fgdc/bin/fgdc-deploy
+# by setup.sh; runs as root.
+#
+#   fgdc-deploy process                       what fgdc-deploy.path runs: handles
+#                                             every file in /srv/fgdc/incoming
+#   fgdc-deploy rollback [ID] [--restore-backup]
+#                                             the same as a ROLLBACK file, by hand
+#   fgdc-deploy restore-backup NAME           the same as a RESTORE file, by hand
+#
+# Files in incoming/:
+#   fg_data_catalog-<ID>.tar.zst   deploy release ID
+#   ROLLBACK-<anything>            roll back; lines `target=<ID>` (default: the
+#                                  release before the current one) and
+#                                  `restore_backup=yes|no`
+#   DATABASE-<anything>.db         replace the database with this one (an
+#                                  SQLite file), keeping the current release
+#   RESTORE-<anything>             put back a backup, keeping the current
+#                                  release; a line `backup=<file name in
+#                                  backups/>`
+#
+# Each switch of release, deploy or rollback:
+#   1. stops the app and backs up the database (backups/);
+#   2. with the release being left, rolls back the migrations the target does
+#      not know (going back to an older release), or with --restore-backup,
+#      puts back the backup taken when the current release was deployed;
+#   3. with the target release, migrates and checks the changelog;
+#   4. points current at the target and starts the app;
+#   5. checks that it answers.
+# If any step fails, the database is restored from the backup of step 1 and
+# the previous release started again.
+#
+# NOTE(Claude Opus 5.5 2026-11-19): replacing the database (DATABASE, RESTORE)
+# is a switch from the current release to itself, with the new file put in
+# place at step 2: the same backup first, migrations and changelog check with
+# the release, start, and recovery if any of it fails.
+#
+# Logs: logs/<file name>.log for each file handled (its last line is RESULT:),
+# and one line per switch in deploys.log (tab separated: time, action, from,
+# to, backup, result).
+set -uo pipefail
+
+ROOT=/srv/fgdc
+APP=fg_data_catalog
+ENV_FILE=/etc/fgdc/env
+SERVICE=fgdc
+APP_USER=fgdc
+DEPLOY_GROUP=fgdc-deploy
+KEEP=5
+
+INCOMING=$ROOT/incoming
+RELEASES=$ROOT/releases
+BACKUPS=$ROOT/backups
+LOGS=$ROOT/logs
+FAILED=$ROOT/failed
+HISTORY=$ROOT/deploys.log
+
+# NOTE(Claude Opus 5.5 2026-11-18): the release evals run as $APP_USER from
+# this script's working directory, and the Erlang VM does not start if it
+# cannot read it (it crashes in code_server). Run with `sudo` over ssh, that
+# is the caller's home, which $APP_USER cannot read; systemd uses /.
+cd "$ROOT/tmp" || exit 1
+
+say() { echo "[$(date -u +%H:%M:%S)] $*"; }
+
+load_env() {
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+  DATABASE_PATH=${DATABASE_PATH:?DATABASE_PATH missing in $ENV_FILE}
+  PORT=${PORT:?PORT missing in $ENV_FILE}
+  export RELEASE_TMP=$ROOT/tmp
+}
+
+current_id() {
+  local link
+  link=$(readlink "$ROOT/current" 2>/dev/null) || return 0
+  basename "$link"
+}
+
+valid_id() { [[ $1 =~ ^[A-Za-z0-9._-]+$ ]]; }
+
+# Runs an Elixir expression with release ID, as the app's user (the database
+# files must stay theirs).
+release_eval() {
+  local id=$1 expr=$2
+  runuser -u "$APP_USER" -- "$RELEASES/$id/bin/$APP" eval "$expr"
+}
+
+migrations_dir() {
+  local dir
+  for dir in "$RELEASES/$1"/lib/$APP-*/priv/repo/migrations; do
+    [ -d "$dir" ] && echo "$dir" && return 0
+  done
+  return 1
+}
+
+restore_db() {
+  local backup=$1
+  say "Putting $backup in place of the database"
+  rm -f "$DATABASE_PATH" "$DATABASE_PATH-wal" "$DATABASE_PATH-shm" &&
+    install -o "$APP_USER" -g "$APP_USER" -m 640 "$backup" "$DATABASE_PATH"
+}
+
+point_current() {
+  ln -sfn "releases/$1" "$ROOT/current.new" && mv -T "$ROOT/current.new" "$ROOT/current" &&
+    touch "$RELEASES/$1"
+}
+
+start_app() {
+  STARTED_AT=$(date +%s)
+  systemctl start "$SERVICE"
+}
+
+healthy() {
+  local i
+  for i in $(seq 60); do
+    if curl -fs -o /dev/null --max-time 5 "http://127.0.0.1:$PORT/"; then
+      say "The app answers on port $PORT"
+      return 0
+    fi
+    if [ "$i" -gt 5 ] && ! systemctl is-active -q "$SERVICE"; then break; fi
+    sleep 1
+  done
+  say "The app does not answer on port $PORT"
+  journalctl -u "$SERVICE" --since "@${STARTED_AT:-0}" -n 30 --no-pager -o cat
+  return 1
+}
+
+record() { # action from to backup result
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "${2:--}" "$3" "${4:--}" "$5" >> "$HISTORY"
+}
+
+# switch ACTION TARGET [BACKUP_TO_RESTORE]
+switch() {
+  local action=$1 target=$2 restore=${3:-} from backup="" migrations
+  from=$(current_id)
+  migrations=$(migrations_dir "$target") || { say "No migrations in release $target"; return 1; }
+
+  say "$action: ${from:-nothing} -> $target"
+  systemctl stop "$SERVICE"
+
+  if [ -f "$DATABASE_PATH" ]; then
+    backup=$BACKUPS/$(date -u +%Y%m%dT%H%M%SZ)-${from:-none}-to-$target.db
+    if ! release_eval "${from:-$target}" "FGDataCatalog.Release.backup(\"$backup\")"; then
+      say "Backup failed: nothing changed"
+      recover "$action" "$from" "$target" ""
+      return 1
+    fi
+  fi
+
+  if
+    {
+      if [ -n "$restore" ]; then
+        restore_db "$restore"
+      elif [ -n "$from" ] && [ -n "$backup" ]; then
+        release_eval "$from" "FGDataCatalog.Release.rollback_for(\"$migrations\")"
+      fi
+    } &&
+      release_eval "$target" "FGDataCatalog.Release.migrate_and_verify()" &&
+      point_current "$target" &&
+      start_app &&
+      healthy
+  then
+    record "$action" "$from" "$target" "$backup" ok
+    say "Now running $target"
+    return 0
+  fi
+
+  recover "$action" "$from" "$target" "$backup"
+  return 1
+}
+
+recover() {
+  local action=$1 from=$2 target=$3 backup=$4
+  say "FAILED: going back to ${from:-nothing}"
+  systemctl stop "$SERVICE"
+  [ -n "$backup" ] && restore_db "$backup"
+  if [ -n "$from" ]; then
+    point_current "$from" && start_app && healthy &&
+      say "Running $from again, with the database as it was before"
+  fi
+  record "$action" "$from" "$target" "$backup" failed
+}
+
+# NOTE(Claude Opus 5.5 2026-11-18): "the previous release" is the one the
+# current release was deployed over (the last successful deploy to it), so
+# that rolling back again keeps going back: A -> B -> C, rollback to B, then
+# to A.
+deploy_line_of() {
+  awk -F'\t' -v to="$1" '$2 == "deploy" && $4 == to && $6 == "ok"' "$HISTORY" 2>/dev/null | tail -1
+}
+
+do_deploy() {
+  local file=$1 name id dir
+  name=$(basename "$file")
+  id=${name#"$APP"-}
+  id=${id%.tar.zst}
+  valid_id "$id" || { say "Invalid release id in $name"; return 1; }
+  dir=$RELEASES/$id
+
+  if [ "$(current_id)" = "$id" ]; then
+    say "$id is already the current release"
+    rm -f "$file"
+    return 0
+  fi
+
+  local fresh=no
+  if [ -d "$dir" ]; then
+    say "Release $id is already unpacked, reusing it"
+  else
+    fresh=yes
+    say "Unpacking $name"
+    rm -rf "$RELEASES/.$id"
+    mkdir -p "$RELEASES/.$id" &&
+      tar --zstd -xf "$file" -C "$RELEASES/.$id" --no-same-owner &&
+      [ -x "$RELEASES/.$id/bin/$APP" ] &&
+      mv "$RELEASES/.$id" "$dir" || {
+      say "Could not unpack $name"
+      rm -rf "$RELEASES/.$id"
+      return 1
+    }
+  fi
+  rm -f "$file"
+  switch deploy "$id" && return 0
+  # NOTE(Claude Opus 5.5 2026-11-18): a release that just failed to deploy
+  # is no rollback target; it would only push good ones out of the KEEP.
+  if [ "$fresh" = yes ] && [ "$(current_id)" != "$id" ]; then
+    say "Removing release $id"
+    rm -rf "${RELEASES:?}/$id"
+  fi
+  return 1
+}
+
+# do_rollback TARGET RESTORE(yes|no)
+do_rollback() {
+  local target=$1 restore=$2 current line backup=""
+  current=$(current_id)
+  [ -n "$current" ] || { say "No current release"; return 1; }
+  line=$(deploy_line_of "$current")
+
+  if [ -z "$target" ]; then
+    target=$(cut -f3 <<< "$line")
+    if [ -z "$target" ] || [ "$target" = - ]; then
+      say "No release before $current in $HISTORY"
+      return 1
+    fi
+  fi
+  valid_id "$target" || { say "Invalid release id $target"; return 1; }
+  [ -d "$RELEASES/$target" ] || { say "Release $target is not on this machine (pruned?)"; return 1; }
+  [ "$target" != "$current" ] || { say "$target is already the current release"; return 1; }
+
+  if [ "$restore" = yes ]; then
+    if [ "$(cut -f3 <<< "$line")" != "$target" ]; then
+      say "--restore-backup: $current was not deployed over $target, there is no backup to go back to"
+      return 1
+    fi
+    backup=$(cut -f5 <<< "$line")
+    [ -f "$backup" ] || { say "--restore-backup: the backup $backup is gone"; return 1; }
+    say "Restoring $backup: changes made since $current was deployed are lost (they stay in the new backup)"
+  fi
+  switch rollback "$target" "$backup"
+}
+
+prune() {
+  local dir file current keep_backup
+  # NOTE(Claude Opus 5.5 2026-11-18): the KEEP most recently used releases
+  # (point_current touches them), the KEEP newest backups, 100 logs. Never
+  # the current release, nor the backup taken when it was deployed (the one
+  # `rollback --restore-backup` puts back).
+  current=$(current_id)
+  keep_backup=$(basename "$(deploy_line_of "$current" | cut -f5)")
+  ls -1t "$RELEASES" | tail -n +$((KEEP + 1)) | while read -r dir; do
+    [ "$dir" = "$current" ] || { say "Pruning release $dir"; rm -rf "${RELEASES:?}/$dir"; }
+  done
+  ls -1t "$BACKUPS" | tail -n +$((KEEP + 1)) | while read -r file; do
+    [ "$file" = "$keep_backup" ] || { say "Pruning backup $file"; rm -f "${BACKUPS:?}/$file"; }
+  done
+  ls -1t "$LOGS" | tail -n +101 | while read -r file; do rm -f "${LOGS:?}/$file"; done
+}
+
+# NOTE(Claude Opus 5.5 2026-11-19): DATABASE-*.db, sent by `deploy/fgdc
+# replace-db`. The file stays in failed/ if the switch fails (logs/ says why).
+do_replace_db() {
+  local file=$1 current
+  current=$(current_id)
+  [ -n "$current" ] || { say "No current release: deploy one first"; return 1; }
+  if [ "$(head -c 15 "$file")" != "SQLite format 3" ]; then
+    say "$(basename "$file") is not an SQLite database"
+    return 1
+  fi
+  say "Replacing the database with $(basename "$file") ($(stat -c %s "$file") bytes)"
+  switch database "$current" "$file" || return 1
+  rm -f "$file"
+}
+
+# do_restore_backup NAME: a file of backups/, by name only.
+do_restore_backup() {
+  local name=$1 current
+  current=$(current_id)
+  [ -n "$current" ] || { say "No current release: deploy one first"; return 1; }
+  valid_id "$name" && [ -f "$BACKUPS/$name" ] || { say "No backup $name in $BACKUPS"; return 1; }
+  say "Restoring $name: changes made since it was taken are lost (they stay in the new backup)"
+  switch restore "$current" "$BACKUPS/$name"
+}
+
+handle() {
+  local file=$1 name target restore
+  name=$(basename "$file")
+  case $name in
+    DATABASE-*.db)
+      do_replace_db "$file"
+      ;;
+    RESTORE-*)
+      target=$(sed -n 's/^backup=//p' "$file" | head -1)
+      rm -f "$file"
+      do_restore_backup "$target"
+      ;;
+    "$APP"-*.tar.zst)
+      do_deploy "$file"
+      ;;
+    ROLLBACK-*)
+      target=$(sed -n 's/^target=//p' "$file" | head -1)
+      restore=$(sed -n 's/^restore_backup=//p' "$file" | head -1)
+      rm -f "$file"
+      do_rollback "$target" "${restore:-no}"
+      ;;
+    *)
+      say "Unknown file $name"
+      return 1
+      ;;
+  esac
+}
+
+# Runs handle on one file, with its log in logs/; the file always leaves
+# incoming/ (or the path unit would trigger again and again).
+handle_logged() {
+  local file=$1 name log status
+  name=$(basename "$file")
+  log=$LOGS/$name.log
+  install -m 640 -g "$DEPLOY_GROUP" /dev/null "$log"
+  handle "$file" 2>&1 | tee -a "$log"
+  status=${PIPESTATUS[0]}
+  if [ -e "$file" ]; then mv -f "$file" "$FAILED/$name"; fi
+  prune 2>&1 | tee -a "$log"
+  if [ "$status" -eq 0 ]; then echo "RESULT: ok" | tee -a "$log"; else echo "RESULT: failed" | tee -a "$log"; fi
+  return "$status"
+}
+
+main() {
+  [ "$(id -u)" -eq 0 ] || { echo "fgdc-deploy: run as root" >&2; exit 1; }
+  umask 027
+  load_env
+  exec 9> "$ROOT/deploy.lock"
+  flock 9
+
+  case ${1:-} in
+    process)
+      local file status=0
+      shopt -s nullglob dotglob
+      while :; do
+        local files=("$INCOMING"/*)
+        [ ${#files[@]} -gt 0 ] || break
+        # The oldest first.
+        file=$(ls -1tr "${files[@]}" | head -1)
+        handle_logged "$file" || status=1
+      done
+      exit "$status"
+      ;;
+    rollback)
+      shift
+      local target="" restore=no arg name
+      for arg in "$@"; do
+        case $arg in
+          --restore-backup) restore=yes ;;
+          *) target=$arg ;;
+        esac
+      done
+      name=ROLLBACK-$(date -u +%Y%m%dT%H%M%SZ)-manual
+      printf 'target=%s\nrestore_backup=%s\n' "$target" "$restore" > "$ROOT/tmp/$name"
+      handle_logged "$ROOT/tmp/$name"
+      ;;
+    restore-backup)
+      local name
+      [ -n "${2:-}" ] || { echo "fgdc-deploy: restore-backup NAME (see ls $BACKUPS)" >&2; exit 2; }
+      name=RESTORE-$(date -u +%Y%m%dT%H%M%SZ)-manual
+      printf 'backup=%s\n' "$2" > "$ROOT/tmp/$name"
+      handle_logged "$ROOT/tmp/$name"
+      ;;
+    *)
+      sed -n '2,/^[^#]/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' -e 's/NOTE([^)]*): //'
+      exit 2
+      ;;
+  esac
+}
+
+main "$@"

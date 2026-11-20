@@ -1,0 +1,2334 @@
+/* NOTE(Claude 2026-11-06): Ubuntu Sans, a variable font (weight 100 to 800,
+ * width 75% to 100%), self-hosted from priv/static/fonts/ubuntu-sans (the
+ * Google Fonts release, files from Fontsource @fontsource-variable/ubuntu-sans
+ * 5.3.0; Ubuntu Font Licence, see LICENSE.txt there). Replaces Inria Sans.
+ *
+ * NOTE(Claude 2026-11-06): Ubuntu Sans Mono for monospace text (see
+ * --font-mono), variable too (weight 400 to 700), from
+ * priv/static/fonts/ubuntu-sans-mono (Fontsource
+ * @fontsource-variable/ubuntu-sans-mono 5.3.0, same licence). */
+
+/* NOTE(Claude 2026-11-05): Brand colors available globally as CSS variables
+ * (the rest of the palette is defined below the fonts). */
+:root {
+  --color-light: #f9f9fa;
+  --color-accent: #fd4f00;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans";
+  font-style: normal;
+  font-weight: 100 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans/ubuntu-sans-latin-ext-wdth-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans";
+  font-style: normal;
+  font-weight: 100 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans/ubuntu-sans-latin-wdth-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans";
+  font-style: italic;
+  font-weight: 100 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans/ubuntu-sans-latin-ext-wdth-italic.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans";
+  font-style: italic;
+  font-weight: 100 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans/ubuntu-sans-latin-wdth-italic.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans Mono";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans-mono/ubuntu-sans-mono-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans Mono";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans-mono/ubuntu-sans-mono-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans Mono";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans-mono/ubuntu-sans-mono-latin-ext-wght-italic.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Ubuntu Sans Mono";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/ubuntu-sans-mono/ubuntu-sans-mono-latin-wght-italic.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+
+/* NOTE(Claude 2026-11-06): the app's styles. A crisp, data-dense look: a light
+ * page, hairline rules, the accent used sparingly.
+ *
+ * NOTE(Claude Opus 5.5 2026-11-17): two themes, light and dark. The page
+ * follows the system's setting, unless the reader picked one with the theme
+ * switch in the header (see `theme_switch/1` in layouts.ex), which sets
+ * `data-theme` on `<html>`. Each color below that differs between the themes
+ * is a `light-dark()` pair, resolved by `color-scheme`.
+ *
+ * The three accents, orange (#fd4f00, the brand's), blue and purple, are the
+ * same in both themes. They are marks only (focus rings, sparklines, meters,
+ * borders, tints), never text: no color can reach the 7:1 that text needs
+ * (WCAG AAA) on both a light and a dark page (4.1:1 at best), while the
+ * accents reach 3:1 on both (orange 3.2:1 on the light page, 5.6:1 on the
+ * dark one). Text in an accent's hue uses its `-text` twin, one per theme:
+ * the color closest to the accent in OKLCH (same hue, nearest lightness and
+ * chroma) with 7:1 on every background it sits on in that theme. The same
+ * for the danger red and the muted grey. A fill behind text (the primary
+ * button, the selected tag, the high quality score) is the `-text` twin, its
+ * text --color-on-fill (white, or the dark page). No green anywhere.
+ *
+ * Every text color has 7:1 on its backgrounds, except the dash of an empty
+ * field (`.no-value`), a faint mark on purpose, hidden from screen readers,
+ * which read "No value" instead. */
+
+:root {
+  --color-page: light-dark(var(--color-light), oklch(0.17 0.006 285));
+  --color-surface: light-dark(#ffffff, oklch(0.205 0.006 285));
+  --color-ink: light-dark(#1f1f24, oklch(0.93 0.004 285));
+  --color-muted: light-dark(oklch(0.43 0.018 285.78), oklch(0.765 0.011 285));
+  --color-rule: light-dark(#d8d8de, oklch(0.32 0.006 285));
+  --color-rule-strong: light-dark(#b9b9c2, oklch(0.43 0.006 285));
+  --color-hover: light-dark(#f0f0f3, oklch(0.27 0.006 285));
+  --color-row-hover: light-dark(oklch(0.985 0.012 227.65), oklch(0.235 0.02 227.65));
+  --color-on-fill: light-dark(#ffffff, oklch(0.17 0.006 285));
+  --color-danger: light-dark(oklch(0.47 0.189 29.51), oklch(0.755 0.147 29.51));
+  --color-danger-soft: light-dark(#fdf0ef, oklch(0.25 0.035 29.51));
+  /* NOTE(Claude Opus 5.5 2026-11-17): the accents, the same in both themes
+   * (and plain values: the `.TitleSpark` hook paints them on a canvas). */
+  --color-blue: oklch(0.6333 0.1036 227.65);
+  --color-purple: oklch(0.6333 0.1357 307.06);
+  /* NOTE(Claude Opus 5.5 2026-11-17): their text twins and tints, per theme. */
+  --color-accent-text: light-dark(oklch(0.45 0.15 37.57), oklch(0.76 0.15 37.57));
+  --color-accent-soft: light-dark(#fff1ea, oklch(0.25 0.04 37.57));
+  --color-primary-hover: light-dark(oklch(0.39 0.13 37.57), oklch(0.82 0.12 37.57));
+  --color-blue-text: light-dark(oklch(0.435 0.077 227.65), oklch(0.745 0.112 227.65));
+  --color-blue-soft: light-dark(oklch(0.97 0.02 227.65), oklch(0.25 0.03 227.65));
+  --color-blue-tint: light-dark(oklch(0.89 0.031 227.65), oklch(0.34 0.045 227.65));
+  --color-blue-medium: light-dark(oklch(0.88 0.06 227.65), oklch(0.34 0.06 227.65));
+  --color-blue-medium-text: light-dark(oklch(0.37 0.07 227.65), oklch(0.835 0.108 227.65));
+  --color-purple-text: light-dark(oklch(0.455 0.158 307.06), oklch(0.76 0.13 307.06));
+  --color-purple-soft: light-dark(oklch(0.97 0.02 307.06), oklch(0.25 0.035 307.06));
+  --color-purple-tint: light-dark(oklch(0.853 0.054 307.06), oklch(0.38 0.07 307.06));
+  --color-backdrop: light-dark(rgb(31 31 36 / 0.4), rgb(0 0 0 / 0.6));
+  --focus-ring: 0 0 0 2px var(--color-page), 0 0 0 4px var(--color-accent);
+  --radius: 0.25rem;
+  --font-weight-normal: 460;
+  --font-mono: "Ubuntu Sans Mono", ui-monospace, monospace;
+  /* NOTE(Claude 2026-11-06): the width of the tags and the Live / Draft
+   * badges; Ubuntu Sans goes from 75% (narrowest) to 100%. */
+  --font-stretch-narrow: 85%;
+  color-scheme: light dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Page */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* NOTE(Claude 2026-11-06): the browsers' monospace elements use Ubuntu Sans
+ * Mono too (e.g. pasted documentation text, in a `<pre>`). */
+pre,
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+body {
+  margin: 0;
+  font-family: "Ubuntu Sans", sans-serif;
+  /* NOTE(Claude 2026-11-06): the default weight, a little above regular
+   * (Ubuntu Sans is variable); see --font-weight-normal. */
+  font-weight: var(--font-weight-normal);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--color-ink);
+  background-color: var(--color-page);
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+a {
+  color: var(--color-accent-text);
+  /* NOTE(Claude 2026-11-12): underline matches the link text color exactly. */
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.15em;
+}
+
+/* NOTE(Claude 2026-11-06): one visible focus style for everything that takes
+ * focus, from the keyboard. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+}
+
+/* NOTE(Claude 2026-11-06): hidden on screen, read by screen readers. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* NOTE(Claude 2026-11-04): Ubuntu Sans has proportional digits by default.
+ * Use fixed-width digits wherever numbers are read down a column or change in
+ * place: versions, dates, year ranges, counts and numeric/date inputs, and in
+ * the forms the version input and the CSV textareas (data dictionary, data
+ * points per year), whose lines are compared one under the other. */
+.last-updated,
+.version,
+.catalog-table time,
+.year-coverage,
+.cohort-coverage,
+.dictionary-link,
+.quality-link,
+.search-count,
+.row-ref,
+.edit-run,
+input:is([type="number"], [type="date"]),
+.dataset-form input[name$="[version]"],
+.dataset-form textarea {
+  font-variant-numeric: tabular-nums;
+}
+
+.site-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-rule);
+  background: var(--color-surface);
+}
+
+/* NOTE(Claude 2026-11-09): the title no longer pushes the rest of the header
+ * to the right: Last updated, Archive and Changelog follow it on the left,
+ * and only the account (see `.site-account`) sits at the right end. */
+.site-title {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+/* NOTE(Claude 2026-11-12): the short bar before the title is a tiny stacked
+ * bar chart: the orange accent (bottom), the blue of the data marks and the
+ * purple of drafts above it, set apart by one-pixel white rules like the
+ * segments of a stacked chart. It stands still: the `.TitleSpark` hook in
+ * layouts.ex draws it on a canvas, where now and then a pixel goes wrong and
+ * the two rules fetch it. The gradient below is the bar without JavaScript,
+ * or for those who ask for less motion. The boundaries are read by the hook
+ * too, so that the canvas draws the same bar.
+ * NOTE(Claude-Opus-5.5 2026-11-17): the rules are white in both themes, not
+ * the header's background (which would draw them dark in the dark theme). */
+.title-bar {
+  --title-bar-blue: 50%;
+  --title-bar-purple: 80%;
+  position: relative;
+  display: inline-block;
+  width: 0.25rem;
+  height: 1em;
+  margin-right: 0.5rem;
+  vertical-align: -0.125em;
+  background: linear-gradient(
+    to top,
+    var(--color-accent) 0 var(--title-bar-blue),
+    #ffffff var(--title-bar-blue) calc(var(--title-bar-blue) + 1px),
+    var(--color-blue) calc(var(--title-bar-blue) + 1px) var(--title-bar-purple),
+    #ffffff var(--title-bar-purple) calc(var(--title-bar-purple) + 1px),
+    var(--color-purple) calc(var(--title-bar-purple) + 1px) 100%
+  );
+}
+
+/* NOTE(Claude 2026-11-12): while the hook draws the bar on a canvas (a pixel
+ * being one CSS pixel), the gradient behind it is hidden. */
+.title-bar.is-drawn {
+  background: none;
+}
+
+.title-bar canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.last-updated {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude 2026-11-09): the signed-in user's email and Sign out, or Sign
+ * in, alone at the right end of the header. */
+.site-account {
+  display: inline-flex;
+  gap: 0.75rem;
+  margin-left: auto;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the theme switch (System, Light, Dark),
+ * after the account: three icon buttons joined in one box, the chosen one
+ * marked like the Editor mode switch when on. Marked from `data-theme` on
+ * `<html>` (set before the first paint), not only from `aria-pressed` (set
+ * once the page is loaded). */
+.theme-switch {
+  display: inline-flex;
+  align-self: center;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+}
+
+.theme-switch button {
+  padding: 0.125rem 0.3125rem;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 0;
+}
+
+.theme-switch button:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.theme-switch button:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.theme-switch button + button {
+  border-left: 1px solid var(--color-rule-strong);
+}
+
+.theme-switch button:hover {
+  color: var(--color-ink);
+}
+
+.theme-switch .icon {
+  width: 1rem;
+  height: 1rem;
+  vertical-align: 0;
+}
+
+:root:not([data-theme="light"], [data-theme="dark"]) #theme-system,
+:root[data-theme="light"] #theme-light,
+:root[data-theme="dark"] #theme-dark {
+  color: var(--color-accent-text);
+  background: var(--color-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.theme-switch button:focus-visible {
+  position: relative;
+  box-shadow: var(--focus-ring);
+}
+
+.site-main {
+  padding: 0 0 2rem;
+}
+
+/* NOTE(Claude 2026-11-06): the development sign-in page. */
+.dev-sign-in {
+  padding: 0 1rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-18): the error pages (404, 500 and the others,
+ * `FGDataCatalogWeb.ErrorHTML`): a short text, at reading width. */
+.error-page {
+  max-width: 36rem;
+  padding: 1rem 1rem 0;
+}
+
+.error-page h1 {
+  margin: 0.25rem 0 1rem;
+}
+
+.error-status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.empty {
+  padding: 0 1rem;
+  color: var(--color-muted);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1rem;
+}
+
+/* Buttons (core `<.button>`, plus plain buttons) */
+
+button,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+.btn:hover {
+  background: var(--color-hover);
+}
+
+button:disabled {
+  color: var(--color-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.btn-primary {
+  font-weight: 700;
+  color: var(--color-on-fill);
+  background: var(--color-accent-text);
+  border-color: var(--color-accent-text);
+}
+
+.btn-primary:disabled {
+  color: var(--color-on-fill);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* NOTE(Claude 2026-11-06): actions that look like the links next to them
+ * (Archive, Publish, Unarchive), but are buttons. */
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent-text);
+  text-decoration: underline;
+  /* NOTE(Claude 2026-11-12): underline matches the text color exactly. */
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.15em;
+  font-size: inherit;
+}
+
+.link-button:hover:not(:disabled) {
+  background: none;
+}
+
+/* Form fields (core `<.input>`) */
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the muted grey (7:1), not the browsers'
+ * lighter default.
+ * NOTE(Claude Opus 5.5 2026-11-19): lighter: in the muted grey, examples
+ * read as values already entered. Halfway to the surface (about 3:1), still
+ * darker than the browsers' default. */
+::placeholder {
+  color: color-mix(in oklab, var(--color-muted) 55%, var(--color-surface));
+  opacity: 1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-label {
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the mark of a required field, after its
+   label, and its legend at the top of a form (see `required_mark/1`). */
+.required-mark {
+  margin-left: 0.125rem;
+  color: var(--color-accent-text);
+  font-weight: 700;
+}
+
+.required-note {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: var(--font-weight-normal);
+}
+
+.input,
+.select,
+.textarea {
+  padding: 0.375rem 0.5rem;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+  /* NOTE(Claude 2026-11-04): not the `font` shorthand, which would also reset
+   * `font-variant-numeric` and so undo the tabular digits set above. */
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  border-color: var(--color-accent);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): a disabled field (e.g. one marked Not
+ * applicable) greyed out: the hover grey behind it, its text and label in the
+ * muted grey, a lighter border. */
+:is(.input, .select, .textarea):disabled {
+  color: var(--color-muted);
+  background: var(--color-hover);
+  border-color: var(--color-hover);
+  cursor: not-allowed;
+}
+
+label:has(> :is(.input, .select, .textarea):disabled) {
+  color: var(--color-muted);
+}
+
+.has-error :is(.input, .select, .textarea) {
+  border-color: var(--color-danger);
+}
+
+.field-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+/* Flash messages (core `<.flash>`) */
+
+#flash-group .toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  width: min(24rem, calc(100vw - 2rem));
+}
+
+.flash-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-left: 0.25rem solid var(--color-muted);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+}
+
+.flash-info .flash-body {
+  border-left-color: var(--color-blue);
+}
+
+.flash-info .flash-icon {
+  color: var(--color-blue-text);
+}
+
+.flash-error .flash-body {
+  border-left-color: var(--color-danger);
+}
+
+.flash-error .flash-icon {
+  color: var(--color-danger);
+}
+
+.flash-text {
+  flex: 1;
+}
+
+.flash-text p {
+  margin: 0;
+}
+
+.flash-title {
+  font-weight: 700;
+}
+
+.flash-close {
+  padding: 0.125rem;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+}
+
+/* NOTE(Claude 2026-11-06): the show/hide transitions of `show/2` and
+ * `hide/2` in core_components.ex. */
+.fade-transition {
+  transition: opacity 200ms ease;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+.fade-in {
+  opacity: 1;
+}
+
+/* Icons */
+
+/* NOTE(Claude 2026-11-06): inline SVG icons (see `<.icon>`): text-sized and
+ * text-colored by default. */
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.25em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .icon-spin {
+    animation: icon-spin 1s linear infinite;
+  }
+}
+
+@keyframes icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Search */
+
+/* NOTE(Claude 2026-11-06): the catalog's search box, above the table. */
+.search-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.search-form .field {
+  width: min(28rem, 100%);
+}
+
+.search-count {
+  min-height: 1.4em;
+  margin: 0 1rem 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude 2026-11-10): the search count, left, and the quick edit's hint,
+ * right, on one line above the table (as wide as the table's box at most). */
+/* NOTE(Claude 2026-11-10): the line above the table and the table's scroll
+ * box, as wide as the table (up to the page width, less its margins), so that
+ * the line's right end is the table's right border. */
+.table-frame {
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin: 0 1rem;
+}
+
+.table-frame > .table-scroll {
+  width: auto;
+  max-width: none;
+  margin: 0;
+}
+
+/* NOTE(Claude 2026-11-12): one height whatever it shows (empty, the search
+ * count, the tag filter, the Editor mode switch), so that the table does not
+ * move as the filters change: centered, not on the baseline, where an empty
+ * search count (no baseline) lowered the line. */
+.table-meta {
+  display: flex;
+  /* NOTE(Claude 2026-11-12): from the left (the tag filter next to the count);
+   * the Editor mode switch is pushed right by its own `margin-left: auto`. */
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+  min-height: 1.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.table-meta .search-count {
+  margin: 0;
+}
+
+/* NOTE(Claude 2026-11-10): the Viewer / Editor mode switch, right, with the
+ * quick edit's hint before it in Editor mode. */
+.editor-mode {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.quick-edit-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+/* NOTE(Claude 2026-11-10): inline-block (was inline-flex), so that its
+ * baseline is its text's, on the hint's baseline; the icon is lowered to sit
+ * centered on the text. */
+.editor-mode-toggle {
+  display: inline-block;
+  white-space: nowrap;
+  padding: 0.125rem 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.editor-mode-toggle:hover {
+  color: var(--color-ink);
+  border-color: var(--color-muted);
+}
+
+.editor-mode-toggle .icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.25rem;
+  vertical-align: -0.1875rem;
+}
+
+.editor-mode-toggle kbd {
+  margin-left: 0.25rem;
+}
+
+.editor-mode-toggle.is-on {
+  color: var(--color-accent-text);
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+}
+
+/* NOTE(Claude 2026-11-10): Editor mode frames the table in the accent. */
+.table-scroll.is-editor-mode {
+  border-color: var(--color-accent);
+}
+
+:is(.quick-edit-hint, .editor-mode-toggle) kbd {
+  padding: 0 0.3125rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--color-rule-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius);
+}
+
+/* NOTE(Claude 2026-11-10): what an editor may quick edit, outlined on hover
+ * (an outline, not a border, so that nothing moves): a cell, or a value of a
+ * stacked cell, or the dataset's name and description. */
+.catalog-table [data-quick-edit]:hover {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.catalog-table span[data-quick-edit]:hover,
+.catalog-table div[data-quick-edit]:hover {
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* NOTE(Claude 2026-11-10): the keyboard cursor of Editor mode (the focused
+ * value): a thicker outline than the hover's, inside the cell, instead of
+ * the focus ring (a box shadow, which a table cell would clip). */
+.catalog-table [data-quick-edit]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+.catalog-table :is(span, div)[data-quick-edit]:focus-visible {
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+/* NOTE(Claude 2026-11-10): the in-place editor: a compact input with its Save
+ * and Cancel icons, in the line of the value it replaces. */
+.quick-edit-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  font-weight: var(--font-weight-normal);
+}
+
+.quick-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.quick-edit-inline :is(.input, .select) {
+  padding: 0.0625rem 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude 2026-11-10): narrow enough not to widen the column much, so
+ * that the Save and Cancel icons stay in view, in the last column too. */
+.quick-edit-inline .input[type="text"] {
+  width: 11rem;
+}
+
+.quick-edit-inline .input[type="number"] {
+  width: 7rem;
+}
+
+.quick-edit-inline .field-error {
+  font-size: 0.75rem;
+  white-space: normal;
+}
+
+.quick-edit-actions {
+  display: inline-flex;
+  padding-top: 0.0625rem;
+}
+
+/* Catalog table: scrolls horizontally, header row and first column stay in view. */
+
+/* NOTE(Claude 2026-11-06): `position: relative` makes the box the containing
+ * block of the `.visually-hidden` texts in the cells (absolutely positioned).
+ * Without it they were placed against the page, at their spot in the wide
+ * table, so the page scrolled sideways too, not only the table. */
+.table-scroll {
+  position: relative;
+  overflow: auto;
+  /* NOTE(Claude 2026-11-09): the box is as wide as the table, up to the page
+   * width (less its margins), so that a wide window leaves no empty space at
+   * the table's right inside the box. */
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  max-height: calc(100vh - 11rem);
+  margin: 0 1rem;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.catalog-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* NOTE(Claude 2026-11-09): wider gutters (were 0.625rem), as the sparklines
+ * and meters fill their cells to the edge, unlike ragged text. */
+.catalog-table th,
+.catalog-table td {
+  padding: 0.375rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-hover);
+}
+
+/* NOTE(Claude 2026-11-09): a row's cells line up on the baseline of their
+ * first line of text (not their top), so that the smaller text of the tag
+ * chips and the status badge sits on the same line as the plain values. */
+.catalog-table tbody th,
+.catalog-table tbody td {
+  vertical-align: baseline;
+}
+
+.catalog-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  vertical-align: bottom;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-rule-strong);
+}
+
+/* NOTE(Claude 2026-11-06): the sticky cells need an opaque background, the
+ * table's (was the browser's `Canvas`). */
+.catalog-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-surface);
+  box-shadow: inset -1px 0 0 var(--color-rule);
+}
+
+.catalog-table thead th:first-child {
+  z-index: 3;
+}
+
+.catalog-table tbody th {
+  font-weight: 700;
+}
+
+/* NOTE(Claude 2026-11-09): the dataset's description, under its name in the
+ * row header, small, in the weight and color of regular text. It wraps at the width of a short phrase rather
+ * than widening the sticky first column. `width: max-content` capped by
+ * `max-width` is the width it asks of the column, so that the column is not
+ * squeezed to its longest word when the table is narrower than the page. */
+.catalog-table .dataset-description {
+  display: block;
+  width: max-content;
+  max-width: 16rem;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.35;
+  color: var(--color-ink);
+  white-space: normal;
+}
+
+/* NOTE(Claude 2026-11-09): in the catalog, the rows are two lines high (the
+ * dataset's description, the stacked cells); the cells with a single line of
+ * content are centered in that height. The row header and the stacked cells
+ * keep the baseline alignment above, so their first lines stay lined up. */
+.catalog-table tbody.dataset td:not(.stacked) {
+  vertical-align: middle;
+}
+
+/* NOTE(Claude 2026-11-09): two values sharing a column, one above the other,
+ * in the two lines of a row's height. The cell's baseline is that of its
+ * first line, so the upper value lines up with the rest of the row. (The
+ * version is a flex `div`, already a line of its own.) */
+.catalog-table span.stacked-value {
+  display: block;
+}
+
+/* NOTE(Claude 2026-11-06): a stronger rule between datasets than between a
+ * dataset's versions. */
+.catalog-table tbody.dataset + tbody.dataset tr:first-child > * {
+  border-top: 1px solid var(--color-rule);
+}
+
+/* NOTE(Claude 2026-11-06): a very light blue, not the grey of the tag
+ * chips, which would vanish into it. */
+.catalog-table tbody tr:hover > * {
+  background: var(--color-row-hover);
+}
+
+.previous-version > * {
+  color: var(--color-muted);
+}
+
+/* NOTE(Claude 2026-11-17): a previous version's name, shown in Editor mode
+ * only (see `version_row/1`). */
+.dataset-name.previous-name {
+  color: var(--color-muted);
+  font-weight: var(--font-weight-normal);
+}
+
+/* NOTE(Claude 2026-11-09): the dataset's name and, on the same line pushed
+ * to the right, the version's status and icon actions, in regular weight
+ * rather than the row header's bold. */
+.dataset-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): a grid of three columns, the status
+ * badge, Edit and the "…" button, which always takes the third: the badges
+ * and buttons line up from row to row, with Edit or without, and no empty
+ * slots in the markup. (The popover, in the top layer, takes no cell.) */
+.dataset-heading .row-actions {
+  display: grid;
+  grid-template-columns: auto 1.375rem 1.375rem;
+  align-items: center;
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-normal);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): icon-only row actions (links and buttons
+ * alike): a small square hit area, side by side, accent-colored, tinted on
+ * hover and focus. Only Edit and the "…" button are left in the row; the
+ * other actions are in the popover below. */
+.icon-action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.icon-action {
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-accent-text);
+  text-decoration: none;
+}
+
+.icon-action:hover:not(:disabled),
+.icon-action:focus-visible {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.icon-action .icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  vertical-align: 0;
+}
+
+.row-actions-trigger {
+  grid-column: 3;
+}
+
+/* NOTE(Codex-GPT-Sol-6.2 2026-11-19): fixed positioning keeps table popovers out of row layout. */
+.table-popover {
+  /* NOTE(Claude Opus 5.5 2026-11-19): the browser's popover style centers it
+   * (`inset: 0; margin: auto`); it is placed against its button instead. */
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4;
+  color: var(--color-ink);
+  white-space: nowrap;
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+}
+
+.row-actions-menu {
+  min-width: 9rem;
+  padding: 0.25rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): CSS anchor positioning, where the browser
+ * has it (`anchor-name` and `position-anchor` are set per row, inline): under
+ * the button, its right edge on the button's; above it near the viewport's
+ * bottom, and extending right near its left edge. Elsewhere `.CatalogTable`
+ * sets `top` and `left` with the same rules. */
+@supports (position-area: bottom) and (position-try-fallbacks: flip-block) {
+  .table-popover {
+    margin-block: 0.25rem;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): where the Popover API is missing, the list
+ * is a disclosure opened by `.CatalogTable` (the `is-open` class), still
+ * `position: fixed`, out of the scroll box's clipping. The selector test is
+ * a rule of its own: a browser that does not know `:popover-open` drops any
+ * rule naming it. */
+@supports not selector(:popover-open) {
+  .table-popover:not(.is-open) {
+    display: none;
+  }
+
+  .table-popover.is-open {
+    z-index: 20;
+  }
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): the "…" button stays tinted while its
+ * popover is open (two rules, for the same reason as above). */
+.row-actions-trigger:has(+ .row-actions-menu:popover-open) {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.row-actions-trigger:has(+ .row-actions-menu.is-open) {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.row-actions-menu ul {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  color: var(--color-ink);
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.menu-action:hover,
+.menu-action:focus-visible {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.menu-action .icon {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--color-accent-text);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): the catalog table takes the focus, from
+ * `.CatalogTable` only (`tabindex="-1"`), when a row's actions are gone after
+ * one of them (e.g. Archive). No ring around the whole table on a click. */
+.catalog-table:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+
+/* Inline lists inside cells */
+
+.tags,
+.doc-links {
+  display: flex;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-links {
+  gap: 0.75rem;
+}
+
+.location-value {
+  display: inline-block;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.location-trigger {
+  cursor: pointer;
+  color: var(--color-accent-text);
+  text-decoration: underline;
+}
+
+.location-popover {
+  width: max-content;
+  max-width: min(26rem, calc(100vw - 1rem));
+  max-height: min(24rem, calc(100vh - 1rem));
+  padding: 0.75rem;
+  overflow: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.location-popover ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.location-popover :is(.location-label, .location-path, a) {
+  display: block;
+}
+
+.location-path {
+  font-size: 0.85em;
+  user-select: all;
+}
+
+.location-copy-status {
+  margin-inline-start: 0.5rem;
+  font-size: 0.85em;
+}
+
+.location-history {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): in a catalog row, the tags sit on two
+ * lines (see `tag_lines/1`), and never more: inline blocks in the cell's
+ * `nowrap` only break at the empty `.tags-break` block, so the column is at
+ * least as wide as the longer line (a wrapping flex list could be squeezed to
+ * its widest chip, a line each). The markup has no whitespace between items. */
+.catalog-table .tags {
+  display: block;
+}
+
+.catalog-table .tags li {
+  display: inline-block;
+}
+
+.catalog-table .tags li:not(:first-child, .tags-break + li) {
+  margin-inline-start: 0.375rem;
+}
+
+.catalog-table .tags li.tags-break {
+  display: block;
+  height: 0.25rem;
+  padding: 0;
+  background: none;
+}
+
+/* NOTE(Claude 2026-11-06): tags as small chips. */
+.tags li {
+  padding: 0 0.375rem;
+  font-size: 0.8125rem;
+  /* NOTE(Claude 2026-11-06): narrow, see --font-stretch-narrow. */
+  font-stretch: var(--font-stretch-narrow);
+  background: var(--color-hover);
+  border-radius: var(--radius);
+}
+
+/* NOTE(Claude 2026-11-10): the hovered tag and the same tag in the other rows
+ * (see the `.CatalogTable` hook): a blue tint and outline, so that it stands apart
+ * from the purple of the search matches.
+ * NOTE(Claude Opus 5.5 2026-11-17): in ink, also in a previous version's row,
+ * as its muted grey does not reach 7:1 on the tint. */
+.tags li.is-tag-hovered {
+  color: var(--color-ink);
+  background: var(--color-blue-tint);
+  box-shadow: inset 0 0 0 1px var(--color-blue);
+}
+
+/* NOTE(Claude 2026-11-12): a tag that filters the rows (see `tag_filter_path/2`)
+ * is a link that looks like the chip's text. */
+.tags li a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the tags the rows are filtered by, in the
+ * table and in the filter line above it: filled with the blue text twin (dark
+ * in the light theme, light in the dark one), see --color-on-fill. */
+.tags li.is-tag-selected {
+  background: var(--color-blue-text);
+  color: var(--color-on-fill);
+}
+
+/* NOTE(Claude 2026-11-12): the tag filter, after the search count, on the line
+ * above the table. */
+.tag-filter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.tag-filter .tags a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.tag-filter-remove {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* NOTE(Claude 2026-11-10): OMOP-mapped as an icon: a tick in a circle, in
+ * ink, when mapped, a muted bare cross when not (shapes differ, not color alone). Unknown is
+ * the usual dash. */
+.omop-mapped {
+  display: inline-flex;
+  color: var(--color-ink);
+}
+
+.omop-mapped.is-no {
+  color: var(--color-muted);
+}
+
+.version,
+.year-coverage,
+.cohort-coverage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-18): the "+N" toggle sits right after the
+ * version name (the flex gap above spaces them), not at the cell's right
+ * edge: revealing previous versions with longer names widens the column,
+ * which moved a right-aligned toggle away from under the pointer. */
+.versions-toggle {
+  padding: 0 0.375rem;
+  font-size: 0.8125rem;
+}
+
+/* NOTE(Claude 2026-11-16): a version's state, shown to editors only. */
+/* NOTE(Claude Opus 5.5 2026-11-19): Live and Draft have the same padding, so
+ * their widths differ; each sits at the end of a slot as wide as the wider
+ * one (Draft), right against the actions, which line up from row to row. The
+ * margin makes the gap from the badge to the Edit icon's drawing the same as
+ * between the Edit and "…" icons' drawings (about 8.5 px, measured). Without
+ * Edit, its column stays empty, so the badge keeps its place. */
+.status-slot {
+  display: inline-flex;
+  flex: none;
+  justify-content: flex-end;
+  width: 2.875rem;
+  margin-right: 0.3rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  /* NOTE(Claude 2026-11-06): narrow, see --font-stretch-narrow. */
+  font-stretch: var(--font-stretch-narrow);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+}
+
+.status-draft {
+  color: var(--color-purple-text);
+  background: var(--color-purple-soft);
+}
+
+.status-published {
+  color: var(--color-blue-text);
+  background: var(--color-blue-soft);
+}
+
+/* NOTE(Claude 2026-11-16): an Archived version (on the edit page only; the
+ * catalog never lists one). */
+.status-archived {
+  color: var(--color-muted);
+  background: var(--color-hover);
+}
+
+/* NOTE(Claude 2026-11-16): the edited version's state, and Publish, above
+ * the edit form. */
+.edit-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+/* NOTE(Claude 2026-11-09): the sparklines share one time axis (see
+ * `year_domain/1`): each sits at the right end of its cell, all as wide as the
+ * year scale in the column header, so that their years line up. The years are
+ * right aligned, right before their sparkline, as the cohort sizes are before
+ * their meters. */
+/* NOTE(Claude Opus 5.5 2026-11-17): the years stacked above their sparkline,
+ * on the row's first line, the sparkline on its second, both at the right end
+ * of the column (as are the title and axis in the header), so that the column
+ * is only as wide as a sparkline. A line's height even when empty (counts
+ * only), so that the sparklines line up from row to row. */
+.year-coverage {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.year-coverage > span {
+  min-height: 1lh;
+}
+
+.sparkline {
+  width: 8rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  /* NOTE(Claude 2026-11-06): data is blue; orange is the brand's, for focus
+   * and actions. */
+  color: var(--color-blue);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): a neutral grey, not blue: the axis'
+ * span, not data, under the light-blue coverage band (see
+ * `--plot-background`). */
+.sparkline .axis-band {
+  fill: var(--plot-background);
+}
+
+.sparkline .coverage-band {
+  opacity: 0.15;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): faint gridlines on the year scale's
+ * ticks, one pixel whatever the stretch: white blended into the grey
+ * background and the light-blue coverage band, so that they read as lighter
+ * cuts in them and never as data; the year 2000's whiter and wider. */
+.sparkline .gridline {
+  stroke: var(--color-surface);
+  stroke-opacity: 0.6;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  shape-rendering: crispEdges;
+}
+
+.sparkline .gridline-2000 {
+  stroke-opacity: 1;
+  stroke-width: 1.5px;
+}
+
+/* NOTE(Claude 2026-11-10): the decade chunks over the counts, transparent
+ * but hoverable (`pointer-events: all` catches an unfilled area too); the
+ * hovered one is shaded and its total shown by the `.SparkTip` hook. */
+.sparkline .chunk {
+  fill-opacity: 0;
+  pointer-events: all;
+}
+
+.sparkline .chunk:hover {
+  fill-opacity: 0.18;
+}
+
+/* NOTE(Claude 2026-11-10): the chunk's tooltip, appended to the body by the
+ * `.SparkTip` hook (fixed, so that the table's scroll box does not clip it).
+ * NOTE(Claude 2026-11-12): above the hovered sparkline, wherever the pointer
+ * is in it, from its left edge and left-aligned: centered, the text moved
+ * with its length from one chunk to the next. */
+.spark-tip {
+  position: fixed;
+  z-index: 50;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--color-surface);
+  background: var(--color-ink);
+  border-radius: var(--radius);
+  pointer-events: none;
+  text-align: left;
+  transform: translateY(calc(-100% - 0.25rem));
+}
+
+/* NOTE(Claude 2026-11-09): the cohort heading laid out like the years one. */
+.years-heading,
+.cohort-heading {
+  display: flex;
+  /* NOTE(Claude 2026-11-06): the title sits at the bottom like the other
+   * headings, next to the axis line, which sits right above the sparklines.
+   * NOTE(Claude 2026-11-09): right before the axis, as the years are right
+   * before their sparklines, so that title and years end at the same edge. */
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the title stacked above the axis, both
+ * at the right end of the column, as the years are above their sparklines. */
+.years-heading,
+.cohort-heading {
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+/* NOTE(Claude 2026-11-06): the first and last year, then the scale with its
+ * ticks rising from it (an SVG, stretched like the sparklines). */
+.year-axis,
+.cohort-axis {
+  display: flex;
+  flex-direction: column;
+  width: 8rem;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): as wide as the meters (see
+ * `--meter-width`). */
+.cohort-axis {
+  width: var(--meter-width);
+}
+
+.year-ticks,
+.axis-ticks {
+  display: block;
+  width: 100%;
+  height: 0.3125rem;
+  overflow: visible;
+  stroke: currentColor;
+}
+
+.year-ticks line,
+.axis-ticks line {
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  shape-rendering: crispEdges;
+}
+
+/* NOTE(Claude 2026-11-06): small two-digit years, each centered on its
+ * tick (placed by `left` in the markup). */
+.year-labels,
+.axis-labels {
+  position: relative;
+  height: 0.875rem;
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+}
+
+.year-labels > span,
+.axis-labels > span {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+
+/* NOTE(Claude 2026-11-06): hangs left of the digits, outside the label's
+ * width, so that the digits are centered on the tick. */
+/* NOTE(Claude 2026-11-09): the year 2000, bold as its gridline. */
+.year-labels > .year-2000 {
+  font-weight: 700;
+}
+
+.year-apostrophe {
+  position: absolute;
+  right: 100%;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): the search's matches in the catalog (see
+ * `highlight/2`): a purple tint behind the text, in ink: the muted grey of
+ * previous versions and the link colors do not reach 7:1 on the tint. */
+.search-match {
+  padding: 0;
+  color: var(--color-ink);
+  background: var(--color-purple-tint);
+  border-radius: 2px;
+}
+
+/* NOTE(Claude 2026-11-06): an empty field, see `no_value/1`. */
+.no-value {
+  color: var(--color-rule-strong);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-18): a field that does not apply, see
+ * `not_applicable/1`: a small italic "n/a", in the muted grey (7:1, it is
+ * text to read, unlike the faint dash of Unknown). Both explain themselves on
+ * hover (their title), hence the help cursor; the dash only where it means
+ * Unknown (`.has-title`). */
+.not-applicable {
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-19): the years and cohort cells' n/a, at the
+ * right end of the column like their values; centered in the row's height
+ * (it is not stacked, see `.catalog-table tbody.dataset td:not(.stacked)`),
+ * on the same line as the OMOP-mapped n/a. */
+.catalog-table .not-applicable-cell {
+  text-align: right;
+}
+
+.not-applicable,
+.no-value.has-title,
+.quality-badge.is-na {
+  cursor: help;
+}
+
+/* NOTE(Claude 2026-11-06): the cohort sizes are right aligned, so that their
+ * digits line up down the column, right before the meters. */
+/* NOTE(Claude Opus 5.5 2026-11-17): like the years, the size stacked above
+ * its meter, both at the right end of the column. The meters are 4.8rem wide
+ * (three fifths of a sparkline), as is the scale in the heading. The plots'
+ * background, behind the sparklines and in the meters' track: a neutral grey,
+ * lighter than the hover grey (two thirds of it on the surface). */
+.catalog-table {
+  --meter-width: 4.8rem;
+  --plot-background: color-mix(in oklab, var(--color-hover) 65%, var(--color-surface));
+}
+
+.cohort-coverage {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.cohort-coverage > span {
+  min-width: 7ch;
+  text-align: right;
+}
+
+.cohort-coverage .meter-slot {
+  width: var(--meter-width);
+  flex-shrink: 0;
+}
+
+/* NOTE(Claude 2026-11-06): the meters drawn by hand, as browsers paint them
+ * green by default (and `accent-color` does not reach them): a purple bar on a
+ * hairline track, set apart from the blue sparklines next to it. */
+/* NOTE(Claude Opus 5.5 2026-11-17): the meter and its gridlines, lowered to
+ * the middle of the sparklines' height, so that meters and sparklines sit on
+ * the same line. */
+.meter-plot {
+  position: relative;
+  width: var(--meter-width);
+  flex-shrink: 0;
+  height: 0.5rem;
+  margin-top: 0.375rem;
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-17): like the sparklines', white one-pixel
+ * cuts, in the purple bar and the grey track; inside the track's hairline
+ * border, which they do not cut. */
+.meter-gridlines {
+  position: absolute;
+  inset: 1px 0;
+  width: 100%;
+  height: calc(100% - 2px);
+  pointer-events: none;
+}
+
+.meter-gridlines line {
+  stroke: var(--color-surface);
+  stroke-opacity: 0.6;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  shape-rendering: crispEdges;
+}
+
+.cohort-coverage meter {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  appearance: none;
+  border: 0;
+  background: none;
+}
+
+.cohort-coverage meter::-webkit-meter-inner-element {
+  display: block;
+  height: 0.5rem;
+}
+
+.cohort-coverage meter::-webkit-meter-bar {
+  height: 0.5rem;
+  box-sizing: border-box;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 0;
+  background: var(--plot-background);
+}
+
+.cohort-coverage meter::-webkit-meter-optimum-value,
+.cohort-coverage meter::-webkit-meter-suboptimum-value,
+.cohort-coverage meter::-webkit-meter-even-less-good-value {
+  background: var(--color-purple);
+}
+
+.cohort-coverage meter:-moz-meter-optimum,
+.cohort-coverage meter:-moz-meter-sub-optimum,
+.cohort-coverage meter:-moz-meter-sub-sub-optimum {
+  border: 1px solid var(--color-rule-strong);
+  background: var(--plot-background);
+}
+
+.cohort-coverage meter::-moz-meter-bar {
+  background: var(--color-purple);
+}
+
+/* NOTE(Claude 2026-11-04): pasted documentation text, shown in a table cell. */
+.doc-text summary {
+  cursor: pointer;
+  color: var(--color-accent-text);
+}
+
+.doc-text pre {
+  max-height: 20rem;
+  max-width: 40rem;
+  margin-top: 0.25rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.85em;
+}
+
+/* Data dictionary modal */
+
+/* NOTE(Claude 2026-11-03): a native <dialog>: the browser centres it and draws
+ * the ::backdrop. No padding on the dialog itself, so that a click on the dialog
+ * element (rather than the panel) means a click on the backdrop. */
+/* NOTE(Claude 2026-11-09): sized to its content (a short dictionary gets a
+ * narrow dialog, long descriptions a wide one), between a floor so it does not
+ * look cramped and a ceiling past which the descriptions wrap. */
+.modal {
+  width: fit-content;
+  min-width: min(28rem, 92vw);
+  max-width: min(72rem, 92vw);
+  max-height: 80vh;
+  padding: 0;
+  overflow: auto;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: calc(var(--radius) * 2);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+}
+
+.modal::backdrop {
+  background: var(--color-backdrop);
+}
+
+/* NOTE(Claude 2026-11-06): rendered open by the server, before (or without)
+ * JavaScript: not a modal, so placed where it is in the page, below the long
+ * table. Fixed and centered instead. */
+.modal[open]:not(:modal) {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  margin: auto;
+}
+
+.modal-panel {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.dictionary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dictionary-table th,
+.dictionary-table td {
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-hover);
+}
+
+.dictionary-table th {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  border-bottom-color: var(--color-rule-strong);
+}
+
+.dictionary-table td:first-child {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+/* NOTE(Claude 2026-11-09): column names are identifiers: never break them.
+ * Details wrap at a readable measure; as the cap is on a block (table cells
+ * ignore max-width), it also bounds how wide they make the fit-content modal.
+ * Details may span several lines (a quoted CSV value): keep its line breaks.
+ * `pre-line` is on the div, not the cell, so the template's own newlines
+ * around the div are not rendered as blank lines. */
+.dictionary-table td:first-child {
+  white-space: nowrap;
+}
+
+.dictionary-details {
+  max-width: 36rem;
+  white-space: pre-line;
+}
+
+/* Dataset forms */
+
+/* NOTE(Claude 2026-11-04): the new dataset and edit forms, each on a page of
+ * its own (see dataset_form_components.ex): one field under the other, label
+ * above input, in a column of readable width. */
+.add-dataset {
+  margin: 1rem 1rem 0;
+}
+
+/* NOTE(Claude 2026-11-12): wider side padding, room for the saved ticks in
+ * the margin left of the fields (see `.saved-tick`). */
+.form-page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.form-page h1 {
+  margin: 0.5rem 0 1.5rem;
+}
+
+.dataset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* NOTE(Claude 2026-11-12): the fields, one under the other; positioned, so
+ * that every saved tick is placed from the column's left edge, even in a
+ * field group. */
+.form-fields {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* NOTE(Claude 2026-11-12): the tick of a field saved by the edit form, in the
+ * margin left of the field's value (an absolute box without `top` stays
+ * where it would have been: at the top of the field, then moved down past
+ * the label, as tall as a one-line input, so that it is centered on the
+ * input or on a text area's first line). A `.suggest` field is positioned
+ * too, but spans the column, so its tick lines up with the others. */
+.saved-tick {
+  position: absolute;
+  left: -1.375rem;
+  display: inline-flex;
+  align-items: center;
+  margin-top: calc(0.875rem * 1.4 + 0.25rem);
+  height: calc(0.9375rem * 1.4 + 0.75rem + 2px);
+  font-size: 0.875rem;
+  color: var(--color-blue-text);
+}
+
+/* NOTE(Claude 2026-11-12): in a radio button's label, next to the chosen
+ * value, centered on it by the label's flex row. */
+.radio-options .saved-tick {
+  margin-top: 0;
+  height: auto;
+}
+
+/* NOTE(Claude 2026-11-12): the form's status and buttons, always in view: on
+ * a narrow screen, a bar stuck to the bottom of the window until the form's
+ * end; on a wide one, a column right of the fields, so that they keep the
+ * page to themselves, its content stuck to the bottom of the window. Under
+ * the suggestion lists (z-index 20). */
+.form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0;
+  background: var(--color-page);
+  border-top: 1px solid var(--color-rule);
+}
+
+/* NOTE(Claude 2026-11-12): a field focused with the keyboard is scrolled
+ * clear of the footer bar of narrow screens. */
+.form-fields :is(input, select, textarea, button) {
+  scroll-margin-bottom: 5rem;
+}
+
+/* NOTE(Claude 2026-11-12): the side column overhangs the centered 44rem page
+ * by 14rem on the right; from this width on, it fits in the window (with a
+ * scrollbar). */
+@media (min-width: 74rem) {
+  /* NOTE(Claude 2026-11-12): the form pages only, not the catalog's quick
+   * edit modal, which is a `.dataset-form` too. */
+  .form-page .dataset-form {
+    display: grid;
+    grid-template-columns: 100% 12rem;
+    column-gap: 2rem;
+  }
+
+  .form-fields :is(input, select, textarea, button) {
+    scroll-margin-bottom: 0;
+  }
+
+  .form-footer {
+    align-self: end;
+    bottom: 1rem;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: 0.75rem;
+    padding: 0;
+    background: none;
+    border-top: 0;
+  }
+}
+
+.dataset-form :is(input:not([type="hidden"], [type="checkbox"], [type="radio"]), select, textarea) {
+  width: 100%;
+}
+
+/* NOTE(Claude 2026-11-04): `align-self`, as the label (a flex column) would
+ * otherwise stretch them to full width. */
+.dataset-form :is(input:is([type="date"], [type="number"]), select:not([multiple])) {
+  align-self: start;
+  width: auto;
+  min-width: 12rem;
+}
+
+/* NOTE(Claude 2026-11-10): a set of radio buttons (OMOP-mapped), one above the
+ * other under their legend, styled like a field's label. */
+.radio-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.radio-group legend {
+  margin-bottom: 0.25rem;
+  padding: 0;
+}
+
+.radio-options {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.25rem;
+}
+
+/* NOTE(Claude 2026-11-10): the button on the left of its text. Overrides
+ * `.field label` (a column, as the group is a `.field`). */
+.radio-group .radio-options label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radio-group .radio-options input {
+  margin: 0;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.field-group legend {
+  padding: 0 0.25rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.embed-row {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.embed-row > :not(button) {
+  flex: 1;
+}
+
+.field-group > button {
+  align-self: start;
+}
+
+.draft-status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* NOTE(Claude 2026-11-06): explanations in the forms: the prefilled version,
+ * the taken name, someone else's changes. */
+.form-note {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-left: 0.25rem solid var(--color-muted);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+}
+
+.form-note p {
+  margin: 0;
+}
+
+.form-note p + p {
+  margin-top: 0.375rem;
+}
+
+#name-holder,
+.edit-notice {
+  border-left-color: var(--color-accent);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.form-footer .form-actions {
+  margin-top: 0;
+}
+
+/* NOTE(Claude 2026-11-04): autocomplete dropdown of the dataset forms. */
+.suggest {
+  position: relative;
+}
+
+/* NOTE(Claude 2026-11-16): fixed, placed (left, width, top or bottom, max
+ * height) by the `.TokenSuggest` hook, so that the table's scroll box does
+ * not clip it; scrolls itself when taller than the room it has. */
+.suggestions {
+  position: fixed;
+  z-index: 20;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.12);
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestions li {
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+.suggestions li:hover,
+.suggestions li[aria-selected="true"] {
+  background: var(--color-accent-soft);
+}
+
+/* Archive and changelog pages */
+
+.archive-page,
+.changelog-page {
+  padding: 0 1rem;
+}
+
+.archive-page .catalog-table,
+.changelog-page .catalog-table {
+  background: var(--color-surface);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+}
+
+/* NOTE(Claude 2026-11-06): the changelog's filters, in a row. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.row-filter {
+  margin: 0;
+  padding-bottom: 0.375rem;
+}
+
+#clear-filters {
+  padding-bottom: 0.375rem;
+}
+
+/* NOTE(Claude 2026-11-05): the changelog is one long table that scrolls with
+   the page, and is denser than the catalog table. */
+.changelog-table {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.changelog-table th,
+.changelog-table td {
+  padding: 0.125rem 0.375rem;
+}
+
+.changelog-table td:last-child {
+  white-space: normal;
+}
+
+/* NOTE(Claude 2026-11-12): top-aligned, not on the baseline as in the catalog
+ * table: the Row cell stacks a name over its table and id (a block "small"),
+ * which baseline alignment let spill out of its row, over the rule below. */
+.changelog-table tbody th,
+.changelog-table tbody td {
+  vertical-align: top;
+}
+
+.changelog-table .first-of-set td {
+  border-top: 1px solid var(--color-rule-strong);
+}
+
+.row-ref {
+  display: block;
+  color: var(--color-muted);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-18): a run of live edits shown as one row. */
+.edit-run,
+.no-net-change {
+  display: block;
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.revert-set {
+  margin-top: 0.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.75rem;
+}
+
+.change-diff {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0 0.5rem;
+  margin: 0;
+}
+
+.change-diff dt {
+  color: var(--color-muted);
+}
+
+.change-diff dd {
+  margin: 0;
+}
+
+.change-diff del {
+  color: var(--color-danger);
+}
+
+.change-diff ins {
+  color: var(--color-blue-text);
+  text-decoration: none;
+}
+
+.changelog-table details summary {
+  cursor: pointer;
+}
+
+/* NOTE(Claude 2026-11-16): the data quality score, in the catalog: a link
+ * that opens its modal. */
+.quality-link {
+  white-space: nowrap;
+}
+
+/* NOTE(Claude 2026-11-16): the score as a badge (like the Live / Draft ones),
+ * its border and background by level (`DataQuality.level/2`), as a ramp of the
+ * one blue (no green, see the palette): low is outlined (no fill), medium
+ * tinted, high filled; the number stays on it, so the level is not told by colour alone.
+ * An incomplete score (`?/7`) is bare: no fill, a dashed hairline, muted. */
+.quality-badge {
+  display: inline-block;
+  min-width: 2.5rem;
+  padding: 0 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+a.quality-badge:hover {
+  text-decoration: underline;
+}
+
+.quality-badge.is-unknown {
+  font-weight: var(--font-weight-normal);
+  color: var(--color-muted);
+  background: none;
+  border: 1px dashed var(--color-rule-strong);
+}
+
+/* NOTE(Claude Opus 5.5 2026-11-18): no criterion applies (`n/a`): like
+ * `.not-applicable`, no badge around it, so it is not read as a low score. */
+.quality-badge.is-na {
+  font-weight: var(--font-weight-normal);
+  font-style: italic;
+  color: var(--color-muted);
+  background: none;
+}
+
+/* NOTE(Claude 2026-11-16): no fill, only the blue border, so that the filled
+ * medium and high stand apart. */
+.quality-badge.is-low {
+  color: var(--color-blue-text);
+  background: var(--color-surface);
+  border-color: var(--color-blue);
+}
+
+.quality-badge.is-medium {
+  color: var(--color-blue-medium-text);
+  background: var(--color-blue-medium);
+  border-color: var(--color-blue);
+}
+
+.quality-badge.is-high {
+  color: var(--color-on-fill);
+  background: var(--color-blue-text);
+  border-color: var(--color-blue-text);
+}
+
+/* NOTE(Claude 2026-11-16): the data quality modal: one line per criterion,
+ * its label and its answer (a word, Yes in bold, No and Unknown regular),
+ * and under it what to do if the answer is no. */
+.quality-criteria {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 36rem;
+}
+
+.quality-criterion {
+  padding: 0.375rem 0;
+  border-bottom: 1px solid var(--color-hover);
+}
+
+.quality-criterion-line {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.quality-answer {
+  margin-left: auto;
+  padding-left: 1.5rem;
+  white-space: nowrap;
+}
+
+.quality-answer.is-yes {
+  font-weight: 700;
+}
+
+.quality-help-text {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-muted);
+}
+
+/* NOTE(Claude 2026-11-16): the data quality section of the forms: per
+ * criterion, its label, the question under it, and Yes / No / Unknown side
+ * by side. */
+.quality-score {
+  margin-left: 0.25rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
+.quality-fields .quality-question > legend {
+  padding: 0;
+}
+
+.quality-question-text {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.quality-question .radio-options {
+  flex-direction: row;
+  gap: 1.25rem;
+}
+
+/* NOTE(Claude 2026-11-16): the button on the left of its text, apart from it.
+ * `.checkbox-label` alone is not a flex row: it relies on `.field label`, and
+ * these groups are not `.field`s. */
+.quality-question .radio-options label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.quality-question .radio-options input {
+  margin: 0;
+}

@@ -1,0 +1,14 @@
+# NOTE(Claude Opus 5.5 2026-11-18): the build context of `deploy/Containerfile`
+# is the repository; keep the Mac's build artifacts, databases and VCS out.
+_build/
+deps/
+.elixir_ls/
+.git/
+.jj/
+tmp/
+cover/
+*.db
+*.db-*
+priv/static/assets/
+priv/static/cache_manifest.json
+erl_crash.dump

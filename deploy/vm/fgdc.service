@@ -1,0 +1,27 @@
+# NOTE(Claude Opus 5.5 2026-11-18): the catalog, running the current release
+# (/srv/fgdc/current, switched by fgdc-deploy). See deploy/README.md.
+[Unit]
+Description=FinnGen data catalog
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/srv/fgdc/current
+
+[Service]
+User=fgdc
+Group=fgdc
+WorkingDirectory=/srv/fgdc/tmp
+EnvironmentFile=/etc/fgdc/env
+ExecStart=/srv/fgdc/current/bin/fg_data_catalog start
+Restart=on-failure
+RestartSec=5
+UMask=0027
+SyslogIdentifier=fgdc
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/srv/fgdc/data /srv/fgdc/tmp
+
+[Install]
+WantedBy=multi-user.target

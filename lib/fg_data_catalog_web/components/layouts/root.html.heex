@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="FinnGen Data Catalog" suffix=" · FinnGen Data Catalog" phx-no-format>{page_title(assigns)}</.live_title>
+    <%!-- NOTE(Claude 2026-11-06): the pixel-art favicon; the .ico is its 32 px raster. --%>
+    <link rel="icon" href={~p"/images/favicon.svg"} type="image/svg+xml" />
+    <link rel="icon" href={~p"/favicon.ico"} sizes="32x32" />
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+    <%!-- NOTE(Claude Opus 5.5 2026-11-17): the theme the reader picked with the
+         switch in the header (`theme_switch/1` in layouts.ex), set on `<html>`
+         before the first paint, so that a dark page never flashes light.
+         Without a pick (or "system"), no `data-theme`: the system's setting
+         applies (see `color-scheme` in app.css). Inline, not in app.js (loaded
+         deferred); the root layout is never patched by LiveView. A pick in
+         another tab applies here too (the `storage` event). --%>
+    <script>
+      (() => {
+        const KEY = "fg:theme"
+        const sync = () => {
+          const theme = document.documentElement.dataset.theme || "system"
+          for (const button of document.querySelectorAll("[data-theme-choice]")) {
+            button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme))
+          }
+        }
+        const setTheme = (theme) => {
+          if (theme === "light" || theme === "dark") {
+            localStorage.setItem(KEY, theme)
+            document.documentElement.dataset.theme = theme
+          } else {
+            localStorage.removeItem(KEY)
+            delete document.documentElement.dataset.theme
+          }
+          sync()
+        }
+        const saved = localStorage.getItem(KEY)
+        if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved
+        document.addEventListener("click", (e) => {
+          const button = e.target.closest("[data-theme-choice]")
+          if (button) setTheme(button.dataset.themeChoice)
+        })
+        window.addEventListener("storage", (e) => e.key === KEY && setTheme(e.newValue))
+        document.addEventListener("DOMContentLoaded", sync)
+        window.addEventListener("phx:page-loading-stop", sync)
+      })()
+    </script>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

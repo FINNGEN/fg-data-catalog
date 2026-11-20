@@ -1,0 +1,1853 @@
+{
+  "datasets": [
+    {
+      "description": "Self-reported sleep and wake times",
+      "id": 1,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Sleep diaries",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": "Daily steps from a wrist-worn device",
+      "id": 2,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Wearable step counts",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": "Daily temperature and air quality by home region",
+      "id": 3,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Regional weather exposure",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": "Fundus photographs from a pilot study",
+      "id": 4,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Retinal imaging pilot",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": "Food frequency questionnaire, two waves",
+      "id": 5,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Dietary questionnaire",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": "Simulated laboratory values for testing pipelines",
+      "id": 6,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Synthetic lab panel",
+      "updated_at": "2026-11-02T09:00:00Z"
+    },
+    {
+      "description": null,
+      "id": 7,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "name": "Example draft dataset",
+      "updated_at": "2026-11-02T09:00:00Z"
+    }
+  ],
+  "dataset_versions": [
+    {
+      "access_type": "green",
+      "archived_at": null,
+      "cohort_size": 310000,
+      "coverage_end": 2025,
+      "coverage_start": 1995,
+      "data_dictionary": [
+        {
+          "col_name": "SLEEP_START",
+          "details": "Time the participant went to bed"
+        },
+        {
+          "col_name": "SLEEP_END",
+          "details": "Time the participant woke up"
+        },
+        {
+          "col_name": "QUALITY",
+          "details": "Self-rated sleep quality, 1 to 5"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 1,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/sleep-diaries/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV"
+      ],
+      "id": 1,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team D",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": "no",
+      "owning_editor_id": null,
+      "release_date": "2026-08-16",
+      "state": "published",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Longitudinal"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R14",
+      "yearly_counts": [
+        {
+          "count": 4468,
+          "year": 1995
+        },
+        {
+          "count": 5638,
+          "year": 1996
+        },
+        {
+          "count": 3802,
+          "year": 1997
+        },
+        {
+          "count": 3208,
+          "year": 1998
+        },
+        {
+          "count": 2557,
+          "year": 1999
+        },
+        {
+          "count": 2311,
+          "year": 2000
+        },
+        {
+          "count": 14320,
+          "year": 2001
+        },
+        {
+          "count": 3030,
+          "year": 2002
+        },
+        {
+          "count": 3088,
+          "year": 2003
+        },
+        {
+          "count": 4765,
+          "year": 2004
+        },
+        {
+          "count": 9347,
+          "year": 2005
+        },
+        {
+          "count": 16837,
+          "year": 2006
+        },
+        {
+          "count": 4356,
+          "year": 2007
+        },
+        {
+          "count": 14548,
+          "year": 2008
+        },
+        {
+          "count": 7714,
+          "year": 2009
+        },
+        {
+          "count": 8039,
+          "year": 2010
+        },
+        {
+          "count": 4234,
+          "year": 2011
+        },
+        {
+          "count": 9781,
+          "year": 2012
+        },
+        {
+          "count": 23787,
+          "year": 2013
+        },
+        {
+          "count": 11901,
+          "year": 2014
+        },
+        {
+          "count": 10057,
+          "year": 2015
+        },
+        {
+          "count": 20484,
+          "year": 2016
+        },
+        {
+          "count": 12222,
+          "year": 2017
+        },
+        {
+          "count": 24274,
+          "year": 2018
+        },
+        {
+          "count": 19495,
+          "year": 2019
+        },
+        {
+          "count": 12897,
+          "year": 2020
+        },
+        {
+          "count": 15762,
+          "year": 2021
+        },
+        {
+          "count": 4041,
+          "year": 2022
+        },
+        {
+          "count": 16259,
+          "year": 2023
+        },
+        {
+          "count": 3909,
+          "year": 2024
+        },
+        {
+          "count": 32609,
+          "year": 2025
+        }
+      ]
+    },
+    {
+      "access_type": "red",
+      "archived_at": null,
+      "cohort_size": 300700,
+      "coverage_end": 2024,
+      "coverage_start": 1995,
+      "data_dictionary": [
+        {
+          "col_name": "SLEEP_START",
+          "details": "Time the participant went to bed"
+        },
+        {
+          "col_name": "SLEEP_END",
+          "details": "Time the participant woke up"
+        },
+        {
+          "col_name": "QUALITY",
+          "details": "Self-rated sleep quality, 1 to 5"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 1,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/sleep-diaries/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV"
+      ],
+      "id": 2,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team A",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2025-06-10",
+      "state": "published",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Longitudinal"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R13",
+      "yearly_counts": [
+        {
+          "count": 2987,
+          "year": 1995
+        },
+        {
+          "count": 6781,
+          "year": 1996
+        },
+        {
+          "count": 780,
+          "year": 1997
+        },
+        {
+          "count": 7303,
+          "year": 1998
+        },
+        {
+          "count": 12690,
+          "year": 1999
+        },
+        {
+          "count": 1438,
+          "year": 2000
+        },
+        {
+          "count": 5260,
+          "year": 2001
+        },
+        {
+          "count": 14926,
+          "year": 2002
+        },
+        {
+          "count": 4295,
+          "year": 2003
+        },
+        {
+          "count": 3989,
+          "year": 2004
+        },
+        {
+          "count": 15526,
+          "year": 2005
+        },
+        {
+          "count": 4114,
+          "year": 2006
+        },
+        {
+          "count": 16428,
+          "year": 2007
+        },
+        {
+          "count": 7071,
+          "year": 2008
+        },
+        {
+          "count": 8503,
+          "year": 2009
+        },
+        {
+          "count": 4368,
+          "year": 2010
+        },
+        {
+          "count": 2657,
+          "year": 2011
+        },
+        {
+          "count": 19982,
+          "year": 2012
+        },
+        {
+          "count": 8021,
+          "year": 2013
+        },
+        {
+          "count": 8749,
+          "year": 2014
+        },
+        {
+          "count": 3791,
+          "year": 2015
+        },
+        {
+          "count": 21390,
+          "year": 2016
+        },
+        {
+          "count": 27611,
+          "year": 2017
+        },
+        {
+          "count": 3727,
+          "year": 2018
+        },
+        {
+          "count": 10222,
+          "year": 2019
+        },
+        {
+          "count": 9512,
+          "year": 2020
+        },
+        {
+          "count": 32919,
+          "year": 2021
+        },
+        {
+          "count": 22294,
+          "year": 2022
+        },
+        {
+          "count": 4107,
+          "year": 2023
+        },
+        {
+          "count": 21087,
+          "year": 2024
+        }
+      ]
+    },
+    {
+      "access_type": "green",
+      "archived_at": "2026-11-04T13:16:43Z",
+      "cohort_size": 291400,
+      "coverage_end": 2023,
+      "coverage_start": 1995,
+      "data_dictionary": [
+        {
+          "col_name": "SLEEP_START",
+          "details": "Time the participant went to bed"
+        },
+        {
+          "col_name": "SLEEP_END",
+          "details": "Time the participant woke up"
+        },
+        {
+          "col_name": "QUALITY",
+          "details": "Self-rated sleep quality, 1 to 5"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 1,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/sleep-diaries/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV"
+      ],
+      "id": 3,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team D",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2024-09-16",
+      "state": "archived",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Longitudinal"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R12",
+      "yearly_counts": [
+        {
+          "count": 2510,
+          "year": 1995
+        },
+        {
+          "count": 5871,
+          "year": 1996
+        },
+        {
+          "count": 5738,
+          "year": 1997
+        },
+        {
+          "count": 9339,
+          "year": 1998
+        },
+        {
+          "count": 5543,
+          "year": 1999
+        },
+        {
+          "count": 4828,
+          "year": 2000
+        },
+        {
+          "count": 8408,
+          "year": 2001
+        },
+        {
+          "count": 13618,
+          "year": 2002
+        },
+        {
+          "count": 7498,
+          "year": 2003
+        },
+        {
+          "count": 17112,
+          "year": 2004
+        },
+        {
+          "count": 6894,
+          "year": 2005
+        },
+        {
+          "count": 11947,
+          "year": 2006
+        },
+        {
+          "count": 2080,
+          "year": 2007
+        },
+        {
+          "count": 18730,
+          "year": 2008
+        },
+        {
+          "count": 3579,
+          "year": 2009
+        },
+        {
+          "count": 2908,
+          "year": 2010
+        },
+        {
+          "count": 10524,
+          "year": 2011
+        },
+        {
+          "count": 22622,
+          "year": 2012
+        },
+        {
+          "count": 17793,
+          "year": 2013
+        },
+        {
+          "count": 5850,
+          "year": 2014
+        },
+        {
+          "count": 3320,
+          "year": 2015
+        },
+        {
+          "count": 18572,
+          "year": 2016
+        },
+        {
+          "count": 23304,
+          "year": 2017
+        },
+        {
+          "count": 11518,
+          "year": 2018
+        },
+        {
+          "count": 21055,
+          "year": 2019
+        },
+        {
+          "count": 10865,
+          "year": 2020
+        },
+        {
+          "count": 33237,
+          "year": 2021
+        },
+        {
+          "count": 27837,
+          "year": 2022
+        },
+        {
+          "count": 20770,
+          "year": 2023
+        }
+      ]
+    },
+    {
+      "access_type": "green",
+      "archived_at": null,
+      "cohort_size": 12400,
+      "coverage_end": 2025,
+      "coverage_start": 2018,
+      "data_dictionary": [
+        {
+          "col_name": "DATE",
+          "details": "Day of the measurement"
+        },
+        {
+          "col_name": "STEPS",
+          "details": "Number of steps in the day"
+        },
+        {
+          "col_name": "WEAR_MIN",
+          "details": "Minutes the device was worn"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 2,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/wearable-step-counts/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "Parquet"
+      ],
+      "id": 4,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead B",
+      "modalities": [
+        "Numerical"
+      ],
+      "omop_integration": null,
+      "owning_editor_id": null,
+      "release_date": "2026-01-10",
+      "state": "published",
+      "tags": [
+        "Activity",
+        "Longitudinal"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "v2",
+      "yearly_counts": [
+        {
+          "count": 174,
+          "year": 2018
+        },
+        {
+          "count": 329,
+          "year": 2019
+        },
+        {
+          "count": 355,
+          "year": 2020
+        },
+        {
+          "count": 434,
+          "year": 2021
+        },
+        {
+          "count": 437,
+          "year": 2022
+        },
+        {
+          "count": 129,
+          "year": 2023
+        },
+        {
+          "count": 213,
+          "year": 2024
+        },
+        {
+          "count": 62,
+          "year": 2025
+        }
+      ]
+    },
+    {
+      "access_type": "public",
+      "archived_at": null,
+      "cohort_size": 12028,
+      "coverage_end": 2024,
+      "coverage_start": 2018,
+      "data_dictionary": [
+        {
+          "col_name": "DATE",
+          "details": "Day of the measurement"
+        },
+        {
+          "col_name": "STEPS",
+          "details": "Number of steps in the day"
+        },
+        {
+          "col_name": "WEAR_MIN",
+          "details": "Minutes the device was worn"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 2,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/wearable-step-counts/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "Parquet"
+      ],
+      "id": 5,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead B",
+      "modalities": [
+        "Numerical"
+      ],
+      "omop_integration": null,
+      "owning_editor_id": null,
+      "release_date": "2025-04-16",
+      "state": "published",
+      "tags": [
+        "Activity",
+        "Longitudinal"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "v1",
+      "yearly_counts": [
+        {
+          "count": 354,
+          "year": 2018
+        },
+        {
+          "count": 188,
+          "year": 2019
+        },
+        {
+          "count": 131,
+          "year": 2020
+        },
+        {
+          "count": 155,
+          "year": 2021
+        },
+        {
+          "count": 491,
+          "year": 2022
+        },
+        {
+          "count": 253,
+          "year": 2023
+        },
+        {
+          "count": 431,
+          "year": 2024
+        }
+      ]
+    },
+    {
+      "access_type": "public",
+      "archived_at": null,
+      "cohort_size": 498000,
+      "coverage_end": 2024,
+      "coverage_start": 1980,
+      "data_dictionary": [
+        {
+          "col_name": "REGION",
+          "details": "Home region code"
+        },
+        {
+          "col_name": "TEMP_MEAN",
+          "details": "Mean daily temperature (°C)"
+        },
+        {
+          "col_name": "PM25",
+          "details": "Fine particulate matter (µg/m³)"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 3,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/regional-weather-exposure/README"
+        }
+      ],
+      "environments": [
+        "Sandbox",
+        "Web"
+      ],
+      "formats": [
+        "TSV",
+        "BigQuery"
+      ],
+      "id": 6,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead C",
+      "modalities": [
+        "Numerical"
+      ],
+      "omop_integration": null,
+      "owning_editor_id": null,
+      "release_date": "2026-09-15",
+      "state": "published",
+      "tags": [
+        "Environment",
+        "Geographic"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R14",
+      "yearly_counts": [
+        {
+          "count": 10575,
+          "year": 1980
+        },
+        {
+          "count": 2971,
+          "year": 1981
+        },
+        {
+          "count": 10359,
+          "year": 1982
+        },
+        {
+          "count": 7063,
+          "year": 1983
+        },
+        {
+          "count": 15983,
+          "year": 1984
+        },
+        {
+          "count": 11734,
+          "year": 1985
+        },
+        {
+          "count": 7927,
+          "year": 1986
+        },
+        {
+          "count": 15802,
+          "year": 1987
+        },
+        {
+          "count": 18637,
+          "year": 1988
+        },
+        {
+          "count": 2706,
+          "year": 1989
+        },
+        {
+          "count": 9602,
+          "year": 1990
+        },
+        {
+          "count": 27006,
+          "year": 1991
+        },
+        {
+          "count": 21546,
+          "year": 1992
+        },
+        {
+          "count": 6485,
+          "year": 1993
+        },
+        {
+          "count": 10203,
+          "year": 1994
+        },
+        {
+          "count": 22577,
+          "year": 1995
+        },
+        {
+          "count": 26064,
+          "year": 1996
+        },
+        {
+          "count": 16972,
+          "year": 1997
+        },
+        {
+          "count": 35547,
+          "year": 1998
+        },
+        {
+          "count": 24915,
+          "year": 1999
+        },
+        {
+          "count": 28782,
+          "year": 2000
+        },
+        {
+          "count": 30595,
+          "year": 2001
+        },
+        {
+          "count": 25998,
+          "year": 2002
+        },
+        {
+          "count": 47271,
+          "year": 2003
+        },
+        {
+          "count": 11563,
+          "year": 2004
+        },
+        {
+          "count": 43698,
+          "year": 2005
+        },
+        {
+          "count": 10924,
+          "year": 2006
+        },
+        {
+          "count": 14874,
+          "year": 2007
+        },
+        {
+          "count": 46318,
+          "year": 2008
+        },
+        {
+          "count": 35087,
+          "year": 2009
+        },
+        {
+          "count": 31761,
+          "year": 2010
+        },
+        {
+          "count": 31547,
+          "year": 2011
+        },
+        {
+          "count": 44348,
+          "year": 2012
+        },
+        {
+          "count": 43128,
+          "year": 2013
+        },
+        {
+          "count": 32616,
+          "year": 2014
+        },
+        {
+          "count": 31512,
+          "year": 2015
+        },
+        {
+          "count": 65515,
+          "year": 2016
+        },
+        {
+          "count": 10138,
+          "year": 2017
+        },
+        {
+          "count": 44796,
+          "year": 2018
+        },
+        {
+          "count": 9369,
+          "year": 2019
+        },
+        {
+          "count": 68847,
+          "year": 2020
+        },
+        {
+          "count": 41516,
+          "year": 2021
+        },
+        {
+          "count": 19583,
+          "year": 2022
+        },
+        {
+          "count": 34493,
+          "year": 2023
+        },
+        {
+          "count": 51420,
+          "year": 2024
+        }
+      ]
+    },
+    {
+      "access_type": "green",
+      "archived_at": null,
+      "cohort_size": 2300,
+      "coverage_end": 2023,
+      "coverage_start": 2021,
+      "data_dictionary": [
+        {
+          "col_name": "IMAGE_ID",
+          "details": "File name of the photograph"
+        },
+        {
+          "col_name": "EYE",
+          "details": "Left or right eye"
+        },
+        {
+          "col_name": "GRADE",
+          "details": "Image quality grade"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 4,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/retinal-imaging-pilot/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "Flat file"
+      ],
+      "id": 7,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead B",
+      "modalities": [
+        "Images"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2026-02-15",
+      "state": "published",
+      "tags": [
+        "Imaging",
+        "Pilot"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "v1",
+      "yearly_counts": [
+        {
+          "count": 48,
+          "year": 2021
+        },
+        {
+          "count": 34,
+          "year": 2022
+        },
+        {
+          "count": 76,
+          "year": 2023
+        }
+      ]
+    },
+    {
+      "access_type": "red",
+      "archived_at": null,
+      "cohort_size": 87000,
+      "coverage_end": 2022,
+      "coverage_start": 2008,
+      "data_dictionary": [
+        {
+          "col_name": "ITEM",
+          "details": "Questionnaire item code"
+        },
+        {
+          "col_name": "FREQ",
+          "details": "Reported frequency per week"
+        },
+        {
+          "col_name": "WAVE",
+          "details": "Questionnaire wave"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 5,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/dietary-questionnaire/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV",
+        "Parquet"
+      ],
+      "id": 8,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead C",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": null,
+      "owning_editor_id": null,
+      "release_date": "2026-03-19",
+      "state": "published",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Diet"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "wave2-QCd",
+      "yearly_counts": [
+        {
+          "count": 744,
+          "year": 2008
+        },
+        {
+          "count": 2146,
+          "year": 2009
+        },
+        {
+          "count": 293,
+          "year": 2010
+        },
+        {
+          "count": 3351,
+          "year": 2011
+        },
+        {
+          "count": 2749,
+          "year": 2012
+        },
+        {
+          "count": 2573,
+          "year": 2013
+        },
+        {
+          "count": 1575,
+          "year": 2014
+        },
+        {
+          "count": 2330,
+          "year": 2015
+        },
+        {
+          "count": 4277,
+          "year": 2016
+        },
+        {
+          "count": 436,
+          "year": 2017
+        },
+        {
+          "count": 4169,
+          "year": 2018
+        },
+        {
+          "count": 3405,
+          "year": 2019
+        },
+        {
+          "count": 1233,
+          "year": 2020
+        },
+        {
+          "count": 3601,
+          "year": 2021
+        },
+        {
+          "count": 1597,
+          "year": 2022
+        }
+      ]
+    },
+    {
+      "access_type": "public",
+      "archived_at": null,
+      "cohort_size": 84390,
+      "coverage_end": 2021,
+      "coverage_start": 2008,
+      "data_dictionary": [
+        {
+          "col_name": "ITEM",
+          "details": "Questionnaire item code"
+        },
+        {
+          "col_name": "FREQ",
+          "details": "Reported frequency per week"
+        },
+        {
+          "col_name": "WAVE",
+          "details": "Questionnaire wave"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 5,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/dietary-questionnaire/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV",
+        "Parquet"
+      ],
+      "id": 9,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team D",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2025-06-14",
+      "state": "published",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Diet"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "wave1-QCd",
+      "yearly_counts": [
+        {
+          "count": 2443,
+          "year": 2008
+        },
+        {
+          "count": 630,
+          "year": 2009
+        },
+        {
+          "count": 1686,
+          "year": 2010
+        },
+        {
+          "count": 2065,
+          "year": 2011
+        },
+        {
+          "count": 3610,
+          "year": 2012
+        },
+        {
+          "count": 2043,
+          "year": 2013
+        },
+        {
+          "count": 3022,
+          "year": 2014
+        },
+        {
+          "count": 2958,
+          "year": 2015
+        },
+        {
+          "count": 720,
+          "year": 2016
+        },
+        {
+          "count": 3558,
+          "year": 2017
+        },
+        {
+          "count": 3766,
+          "year": 2018
+        },
+        {
+          "count": 1688,
+          "year": 2019
+        },
+        {
+          "count": 5549,
+          "year": 2020
+        },
+        {
+          "count": 2940,
+          "year": 2021
+        }
+      ]
+    },
+    {
+      "access_type": "red",
+      "archived_at": "2026-11-04T13:16:43Z",
+      "cohort_size": 81780,
+      "coverage_end": 2020,
+      "coverage_start": 2008,
+      "data_dictionary": [
+        {
+          "col_name": "ITEM",
+          "details": "Questionnaire item code"
+        },
+        {
+          "col_name": "FREQ",
+          "details": "Reported frequency per week"
+        },
+        {
+          "col_name": "WAVE",
+          "details": "Questionnaire wave"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 5,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/dietary-questionnaire/README"
+        }
+      ],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [
+        "TSV",
+        "Parquet"
+      ],
+      "id": 10,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Lead C",
+      "modalities": [
+        "Text",
+        "Numerical"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2024-04-14",
+      "state": "archived",
+      "tags": [
+        "Phenotype",
+        "Self-report",
+        "Diet"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "wave1",
+      "yearly_counts": [
+        {
+          "count": 1752,
+          "year": 2008
+        },
+        {
+          "count": 1446,
+          "year": 2009
+        },
+        {
+          "count": 1283,
+          "year": 2010
+        },
+        {
+          "count": 2563,
+          "year": 2011
+        },
+        {
+          "count": 373,
+          "year": 2012
+        },
+        {
+          "count": 1248,
+          "year": 2013
+        },
+        {
+          "count": 2250,
+          "year": 2014
+        },
+        {
+          "count": 4295,
+          "year": 2015
+        },
+        {
+          "count": 2242,
+          "year": 2016
+        },
+        {
+          "count": 3071,
+          "year": 2017
+        },
+        {
+          "count": 1689,
+          "year": 2018
+        },
+        {
+          "count": 2067,
+          "year": 2019
+        },
+        {
+          "count": 4574,
+          "year": 2020
+        }
+      ]
+    },
+    {
+      "access_type": "public",
+      "archived_at": null,
+      "cohort_size": 520000,
+      "coverage_end": 2025,
+      "coverage_start": 1990,
+      "data_dictionary": [
+        {
+          "col_name": "TEST_CODE",
+          "details": "Laboratory test code"
+        },
+        {
+          "col_name": "VALUE",
+          "details": "Measured value"
+        },
+        {
+          "col_name": "UNIT",
+          "details": "Unit of the value"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 6,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/synthetic-lab-panel/README"
+        }
+      ],
+      "environments": [
+        "Sandbox",
+        "Web"
+      ],
+      "formats": [
+        "TSV"
+      ],
+      "id": 11,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team D",
+      "modalities": [
+        "Numerical"
+      ],
+      "omop_integration": "no",
+      "owning_editor_id": null,
+      "release_date": "2026-07-16",
+      "state": "published",
+      "tags": [
+        "Lab measurements",
+        "Example"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R14",
+      "yearly_counts": [
+        {
+          "count": 1157,
+          "year": 1990
+        },
+        {
+          "count": 11138,
+          "year": 1991
+        },
+        {
+          "count": 16076,
+          "year": 1992
+        },
+        {
+          "count": 9227,
+          "year": 1993
+        },
+        {
+          "count": 15564,
+          "year": 1994
+        },
+        {
+          "count": 7324,
+          "year": 1995
+        },
+        {
+          "count": 23078,
+          "year": 1996
+        },
+        {
+          "count": 18825,
+          "year": 1997
+        },
+        {
+          "count": 12345,
+          "year": 1998
+        },
+        {
+          "count": 22789,
+          "year": 1999
+        },
+        {
+          "count": 11388,
+          "year": 2000
+        },
+        {
+          "count": 24660,
+          "year": 2001
+        },
+        {
+          "count": 33034,
+          "year": 2002
+        },
+        {
+          "count": 28039,
+          "year": 2003
+        },
+        {
+          "count": 29426,
+          "year": 2004
+        },
+        {
+          "count": 16919,
+          "year": 2005
+        },
+        {
+          "count": 36356,
+          "year": 2006
+        },
+        {
+          "count": 33152,
+          "year": 2007
+        },
+        {
+          "count": 36127,
+          "year": 2008
+        },
+        {
+          "count": 39733,
+          "year": 2009
+        },
+        {
+          "count": 9110,
+          "year": 2010
+        },
+        {
+          "count": 17329,
+          "year": 2011
+        },
+        {
+          "count": 38827,
+          "year": 2012
+        },
+        {
+          "count": 36635,
+          "year": 2013
+        },
+        {
+          "count": 44390,
+          "year": 2014
+        },
+        {
+          "count": 52332,
+          "year": 2015
+        },
+        {
+          "count": 19081,
+          "year": 2016
+        },
+        {
+          "count": 53846,
+          "year": 2017
+        },
+        {
+          "count": 17621,
+          "year": 2018
+        },
+        {
+          "count": 17122,
+          "year": 2019
+        },
+        {
+          "count": 18693,
+          "year": 2020
+        },
+        {
+          "count": 9042,
+          "year": 2021
+        },
+        {
+          "count": 9556,
+          "year": 2022
+        },
+        {
+          "count": 49701,
+          "year": 2023
+        },
+        {
+          "count": 24012,
+          "year": 2024
+        },
+        {
+          "count": 13437,
+          "year": 2025
+        }
+      ]
+    },
+    {
+      "access_type": "green",
+      "archived_at": null,
+      "cohort_size": 504400,
+      "coverage_end": 2024,
+      "coverage_start": 1990,
+      "data_dictionary": [
+        {
+          "col_name": "TEST_CODE",
+          "details": "Laboratory test code"
+        },
+        {
+          "col_name": "VALUE",
+          "details": "Measured value"
+        },
+        {
+          "col_name": "UNIT",
+          "details": "Unit of the value"
+        }
+      ],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 6,
+      "dataset_name": null,
+      "doc_links": [
+        {
+          "kind": "link",
+          "label": "README",
+          "text": null,
+          "url": "https://example.org/synthetic-lab-panel/README"
+        }
+      ],
+      "environments": [
+        "Sandbox",
+        "Web"
+      ],
+      "formats": [
+        "TSV"
+      ],
+      "id": 12,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": "Team D",
+      "modalities": [
+        "Numerical"
+      ],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2025-03-13",
+      "state": "published",
+      "tags": [
+        "Lab measurements",
+        "Example"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R13",
+      "yearly_counts": [
+        {
+          "count": 3472,
+          "year": 1990
+        },
+        {
+          "count": 12553,
+          "year": 1991
+        },
+        {
+          "count": 11454,
+          "year": 1992
+        },
+        {
+          "count": 9223,
+          "year": 1993
+        },
+        {
+          "count": 16949,
+          "year": 1994
+        },
+        {
+          "count": 18895,
+          "year": 1995
+        },
+        {
+          "count": 7320,
+          "year": 1996
+        },
+        {
+          "count": 18832,
+          "year": 1997
+        },
+        {
+          "count": 4419,
+          "year": 1998
+        },
+        {
+          "count": 17894,
+          "year": 1999
+        },
+        {
+          "count": 8643,
+          "year": 2000
+        },
+        {
+          "count": 8531,
+          "year": 2001
+        },
+        {
+          "count": 29902,
+          "year": 2002
+        },
+        {
+          "count": 13597,
+          "year": 2003
+        },
+        {
+          "count": 2856,
+          "year": 2004
+        },
+        {
+          "count": 28528,
+          "year": 2005
+        },
+        {
+          "count": 8311,
+          "year": 2006
+        },
+        {
+          "count": 26809,
+          "year": 2007
+        },
+        {
+          "count": 7241,
+          "year": 2008
+        },
+        {
+          "count": 14762,
+          "year": 2009
+        },
+        {
+          "count": 8193,
+          "year": 2010
+        },
+        {
+          "count": 29052,
+          "year": 2011
+        },
+        {
+          "count": 11606,
+          "year": 2012
+        },
+        {
+          "count": 25931,
+          "year": 2013
+        },
+        {
+          "count": 13247,
+          "year": 2014
+        },
+        {
+          "count": 11677,
+          "year": 2015
+        },
+        {
+          "count": 38433,
+          "year": 2016
+        },
+        {
+          "count": 15655,
+          "year": 2017
+        },
+        {
+          "count": 40251,
+          "year": 2018
+        },
+        {
+          "count": 5143,
+          "year": 2019
+        },
+        {
+          "count": 34268,
+          "year": 2020
+        },
+        {
+          "count": 62775,
+          "year": 2021
+        },
+        {
+          "count": 60000,
+          "year": 2022
+        },
+        {
+          "count": 44364,
+          "year": 2023
+        },
+        {
+          "count": 56663,
+          "year": 2024
+        }
+      ]
+    },
+    {
+      "access_type": "red",
+      "archived_at": "2026-11-04T13:16:43Z",
+      "cohort_size": null,
+      "coverage_end": null,
+      "coverage_start": null,
+      "data_dictionary": [],
+      "data_quality": {},
+      "dataset_description": null,
+      "dataset_id": 7,
+      "dataset_name": null,
+      "doc_links": [],
+      "environments": [
+        "Sandbox"
+      ],
+      "formats": [],
+      "id": 13,
+      "inserted_at": "2026-11-02T09:00:00Z",
+      "lead": null,
+      "modalities": [],
+      "omop_integration": "yes",
+      "owning_editor_id": null,
+      "release_date": "2026-09-18",
+      "state": "archived",
+      "tags": [
+        "Example"
+      ],
+      "updated_at": "2026-11-02T09:00:00Z",
+      "version": "R1",
+      "yearly_counts": []
+    }
+  ]
+}

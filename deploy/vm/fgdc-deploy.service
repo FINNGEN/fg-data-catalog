@@ -1,0 +1,9 @@
+# NOTE(Claude Opus 5.5 2026-11-18): deploys or rolls back what is in
+# /srv/fgdc/incoming (started by fgdc-deploy.path).
+[Unit]
+Description=Deploy FinnGen data catalog releases
+
+[Service]
+Type=oneshot
+ExecStart=/srv/fgdc/bin/fgdc-deploy process
+TimeoutStartSec=15min

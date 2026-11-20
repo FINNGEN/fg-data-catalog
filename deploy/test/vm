@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# NOTE(Claude Opus 5.5 2026-11-18): runs a stand-in for the production VM in
+# the Podman build machine, to try deploy/fgdc and deploy/vm/ end to end
+# before using them on the real VM.
+#
+#   deploy/test/vm up      start it, run setup.sh in it, with dummy secrets
+#   deploy/test/vm env     print the variables that point deploy/fgdc at it:
+#                          eval "$(deploy/test/vm env)"; deploy/fgdc deploy
+#   deploy/test/vm sh      a root shell in it
+#   deploy/test/vm down    remove it
+set -euo pipefail
+
+MACHINE=${FGDC_BUILD_MACHINE:-fgdc-build}
+NAME=fgdc-test-vm
+PORT=2299
+REPO=$(cd "$(dirname "$0")/../.." && pwd)
+STATE=$REPO/_build/test-vm
+export CONTAINER_CONNECTION=$MACHINE
+
+case ${1:-} in
+  up)
+    mkdir -p "$STATE"
+    [ -f "$STATE/key" ] || ssh-keygen -q -t ed25519 -N '' -f "$STATE/key"
+    cat > "$STATE/ssh_config" <<EOF
+Host fgdc-test
+  HostName 127.0.0.1
+  Port $PORT
+  User deployer
+  IdentityFile $STATE/key
+  IdentitiesOnly yes
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  LogLevel ERROR
+EOF
+    # NOTE(Claude Opus 5.5 2026-11-18): arm64 like the VM, so that it gets
+    # the same tarball as production.
+    podman build --platform linux/arm64 -t localhost/fgdc-test-vm -f "$REPO/deploy/test/Containerfile.vm" "$REPO/deploy/test"
+    podman rm -f "$NAME" > /dev/null 2>&1 || true
+    podman run -d --name "$NAME" --platform linux/arm64 --systemd=always -p "$PORT:22" localhost/fgdc-test-vm > /dev/null
+    podman cp "$STATE/key.pub" "$NAME:/home/deployer/.ssh/authorized_keys"
+    podman exec "$NAME" chown -R deployer:deployer /home/deployer/.ssh
+    for _ in $(seq 60); do
+      podman exec "$NAME" systemctl is-system-running 2>/dev/null | grep -qE 'running|degraded' && break
+      sleep 1
+    done
+    podman exec "$NAME" systemctl start ssh
+    FGDC_DEPLOY_HOST=fgdc-test FGDC_SSH_OPTS="-F $STATE/ssh_config" "$REPO/deploy/fgdc" setup
+    # Dummy secrets: enough for the app to start; signing in does not work.
+    podman exec "$NAME" sed -i \
+      -e 's/^PHX_HOST=$/PHX_HOST=catalog.example.org/' \
+      -e 's/^GOOGLE_CLIENT_ID=$/GOOGLE_CLIENT_ID=test/' \
+      -e 's/^GOOGLE_CLIENT_SECRET=$/GOOGLE_CLIENT_SECRET=test/' /etc/fgdc/env
+    echo "Up: eval \"\$(deploy/test/vm env)\", then deploy/fgdc deploy"
+    ;;
+  env)
+    echo "export FGDC_DEPLOY_HOST=fgdc-test FGDC_SSH_OPTS='-F $STATE/ssh_config'"
+    ;;
+  sh)
+    podman exec -it "$NAME" bash
+    ;;
+  down)
+    podman rm -f "$NAME"
+    ;;
+  *)
+    sed -n '2,/^[^#]/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' -e 's/NOTE([^)]*): //'
+    exit 2
+    ;;
+esac

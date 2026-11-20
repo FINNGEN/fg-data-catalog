@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+# NOTE(Claude Opus 5.5 2026-11-18): deploys the catalog from this Mac to the
+# production VM (see deploy/README.md). Everything on the VM is done by its
+# watcher (deploy/vm/fgdc-deploy); this script only builds and sends files.
+#
+#   deploy/fgdc build                      build the release tarball
+#   deploy/fgdc deploy [TARBALL]           build (or take TARBALL), send, wait
+#   deploy/fgdc rollback [ID] [--restore-backup]
+#   deploy/fgdc replace-db [DB] [--yes]    replace the production database with
+#                                          DB (default: the dev one), see below
+#   deploy/fgdc restore-backup NAME        put back a backup of the VM's (status lists them)
+#   deploy/fgdc status                     current release, last deploys
+#   deploy/fgdc log [NAME]                 a deploy's log (default: the last)
+#   deploy/fgdc setup [DEPLOY_USER]        install or update the VM side (sudo)
+#   deploy/fgdc build-machine              create the Podman machine
+#
+# FGDC_DEPLOY_HOST: the ssh target (default: fgdc-prod, from ~/.ssh/config).
+# FGDC_BUILD_MACHINE: the Podman machine (default: fgdc-build).
+# FGDC_SSH_OPTS: extra ssh and scp options (e.g. `-F file`, as deploy/test/vm does).
+set -euo pipefail
+
+HOST=${FGDC_DEPLOY_HOST:-fgdc-prod}
+MACHINE=${FGDC_BUILD_MACHINE:-fgdc-build}
+ROOT=/srv/fgdc
+APP=fg_data_catalog
+REPO=$(cd "$(dirname "$0")/.." && pwd)
+# NOTE(Claude Opus 5.5 2026-11-18): the VM's platform (GCP N4A).
+PLATFORM=linux/arm64
+OUT=$REPO/_build/deploy
+# shellcheck disable=SC2206
+SSH_OPTS=(${FGDC_SSH_OPTS:-})
+ssh() { command ssh ${SSH_OPTS[@]+"${SSH_OPTS[@]}"} "$@"; }
+scp() { command scp ${SSH_OPTS[@]+"${SSH_OPTS[@]}"} "$@"; }
+
+die() { echo "fgdc: $*" >&2; exit 1; }
+
+# NOTE(Claude Opus 5.5 2026-11-18): the release id, `<commit time>-<commit
+# id>`: unique per content (a jj change id stays the same across `jj squash`)
+# and sorted by time. The working copy's commit if it has changes (jj has just
+# snapshotted them), else its parent: the usual case after `jj commit`.
+release_id() {
+  local rev=@
+  if [ "$(jj log --no-graph -r @ -T 'if(empty, "empty")')" = empty ]; then
+    rev=@-
+  else
+    echo "fgdc: warning: deploying the working copy's changes (not committed with jj commit)" >&2
+  fi
+  jj log --no-graph -r "$rev" \
+    -T 'committer.timestamp().utc().format("%Y%m%dT%H%M%SZ") ++ "-" ++ commit_id.short(12)'
+}
+
+cmd_build_machine() {
+  # NOTE(Claude Opus 5.5 2026-11-18): a machine of its own, so as not to
+  # change the others, with room for the build cache.
+  podman machine init "$MACHINE" --memory 6144 --cpus 6 --disk-size 60 --now
+}
+
+podman_build() {
+  if ! podman machine inspect "$MACHINE" --format '{{.State}}' 2>/dev/null | grep -q running; then
+    podman machine start "$MACHINE" >&2 || die "cannot start the Podman machine $MACHINE (deploy/fgdc build-machine creates it)"
+  fi
+  CONTAINER_CONNECTION=$MACHINE podman build --platform "$PLATFORM" "$@"
+}
+
+cmd_build() {
+  local id file
+  id=$(release_id)
+  file=$OUT/$APP-$id.tar.zst
+  if [ -f "$file" ]; then
+    echo "fgdc: $file already built" >&2
+  else
+    mkdir -p "$OUT"
+    # NOTE(Claude Opus 5.5 2026-11-18): the image holds only the tarball;
+    # copied out through a container that never runs (`--output` is not
+    # available with a Podman machine).
+    podman_build -f "$REPO/deploy/Containerfile" --build-arg "RELEASE_ID=$id" \
+      -t "localhost/$APP-release:$id" "$REPO" >&2
+    local cid
+    cid=$(CONTAINER_CONNECTION=$MACHINE podman create --platform "$PLATFORM" "localhost/$APP-release:$id" /none)
+    CONTAINER_CONNECTION=$MACHINE podman cp "$cid:/$APP-$id.tar.zst" "$file.part" &&
+      mv "$file.part" "$file"
+    CONTAINER_CONNECTION=$MACHINE podman rm "$cid" > /dev/null
+    CONTAINER_CONNECTION=$MACHINE podman rmi "localhost/$APP-release:$id" > /dev/null || true
+    [ -f "$file" ] || die "the build did not produce $file"
+  fi
+  echo "$file"
+}
+
+# NOTE(Claude Opus 5.5 2026-11-18): sends a file to the watched folder: first
+# to upload/ under a dot name, then moved into incoming/ (same filesystem,
+# atomic), so the watcher never sees half a file.
+send() {
+  local src=$1 name=$2
+  scp -q "$src" "$HOST:$ROOT/upload/.$name.part"
+  ssh "$HOST" "mv '$ROOT/upload/.$name.part' '$ROOT/incoming/$name'"
+}
+
+# Prints the VM's log of NAME as it grows, until its RESULT line; fails if the
+# result is not ok.
+wait_for() {
+  ssh "$HOST" bash -s -- "$ROOT/logs/$1.log" <<'EOF'
+log=$1 shown=0
+for _ in $(seq 900); do
+  if [ -f "$log" ]; then
+    text=$(cat "$log")
+    lines=$(printf '%s\n' "$text" | wc -l)
+    printf '%s\n' "$text" | tail -n +$((shown + 1))
+    shown=$lines
+    case $(printf '%s\n' "$text" | grep '^RESULT:' | tail -1) in
+      "RESULT: ok"*) exit 0 ;;
+      RESULT:*) exit 1 ;;
+    esac
+  fi
+  sleep 1
+done
+echo "fgdc: no result after 15 minutes in $log" >&2
+exit 1
+EOF
+}
+
+cmd_deploy() {
+  local file=${1:-} name
+  [ -n "$file" ] || file=$(cmd_build)
+  [ -f "$file" ] || die "no file $file"
+  name=$(basename "$file")
+  case $name in $APP-*.tar.zst) ;; *) die "not a release tarball: $name" ;; esac
+  echo "fgdc: sending $name to $HOST"
+  send "$file" "$name"
+  wait_for "$name"
+}
+
+cmd_rollback() {
+  local target="" restore=no arg name tmp
+  for arg in "$@"; do
+    case $arg in
+      --restore-backup) restore=yes ;;
+      -*) die "unknown option $arg" ;;
+      *) target=$arg ;;
+    esac
+  done
+  name=ROLLBACK-$(date -u +%Y%m%dT%H%M%SZ)
+  tmp=$(mktemp)
+  printf 'target=%s\nrestore_backup=%s\n' "$target" "$restore" > "$tmp"
+  echo "fgdc: asking $HOST to roll back to ${target:-the previous release}, restore_backup=$restore"
+  send "$tmp" "$name"
+  rm -f "$tmp"
+  wait_for "$name"
+}
+
+# NOTE(Claude Opus 5.5 2026-11-19): sends a copy of DB to replace the
+# production database, keeping the current release. The VM backs up the one
+# it replaces, migrates and checks the new one with the current release, and
+# puts the old one back if anything fails (see deploy/vm/fgdc-deploy). Here:
+# a consistent copy (the dev database is in WAL mode, and may be in use),
+# without the login sessions, checked with this checkout's code, then a
+# confirmation.
+cmd_replace_db() {
+  local db="" yes=no arg tmp name answer
+  for arg in "$@"; do
+    case $arg in
+      --yes) yes=yes ;;
+      -*) die "unknown option $arg" ;;
+      *) db=$arg ;;
+    esac
+  done
+  db=${db:-$REPO/fg_data_catalog_dev.db}
+  [ -f "$db" ] || die "no database $db"
+  command -v sqlite3 > /dev/null || die "sqlite3 is needed"
+
+  tmp=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '$tmp'" EXIT
+  sqlite3 "$db" ".backup '$tmp/copy.db'"
+  sqlite3 "$tmp/copy.db" "DELETE FROM users_tokens; VACUUM;"
+
+  echo "fgdc: checking the changelog of the copy"
+  (cd "$REPO" && mix changelog.verify --database "$tmp/copy.db") || die "the copy does not verify: nothing sent"
+
+  echo
+  echo "fgdc: about to replace the database on $HOST with a copy of $db:"
+  sqlite3 -list -noheader "$tmp/copy.db" "
+    SELECT '  datasets:       ' || (SELECT count(*) FROM datasets);
+    SELECT '  versions:       ' || (SELECT count(*) FROM dataset_versions);
+    SELECT '  change sets:    ' || (SELECT count(*) FROM change_sets);
+    SELECT '  users:          ' || (SELECT count(*) FROM users) || ' (login sessions removed)';
+    SELECT '  last migration: ' || (SELECT max(version) FROM schema_migrations);"
+  echo "  Everything in the production database now is replaced (the VM keeps a backup)."
+  if [ "$yes" != yes ]; then
+    # NOTE(Claude Opus 5.5 2026-11-19): opened, not just tested with `-r`:
+    # under `mix cmd` (`mix deploy.replace_db`) the script has no controlling
+    # terminal, and /dev/tty, though readable, cannot be opened.
+    { : < /dev/tty; } 2>/dev/null || die "no terminal to confirm: pass --yes, or run deploy/fgdc replace-db"
+    printf 'Type "replace" to go on: '
+    read -r answer < /dev/tty
+    [ "$answer" = replace ] || die "cancelled: nothing sent"
+  fi
+
+  name=DATABASE-$(date -u +%Y%m%dT%H%M%SZ).db
+  echo "fgdc: sending $name to $HOST"
+  send "$tmp/copy.db" "$name"
+  wait_for "$name"
+}
+
+cmd_restore_backup() {
+  local backup=${1:-} name tmp
+  [ -n "$backup" ] || die "restore-backup NAME: a backup from the last column of deploy/fgdc status"
+  backup=$(basename "$backup")
+  name=RESTORE-$(date -u +%Y%m%dT%H%M%SZ)
+  tmp=$(mktemp)
+  printf 'backup=%s\n' "$backup" > "$tmp"
+  echo "fgdc: asking $HOST to put back the backup $backup"
+  send "$tmp" "$name"
+  rm -f "$tmp"
+  wait_for "$name"
+}
+
+cmd_status() {
+  ssh "$HOST" bash -s -- "$ROOT" <<'EOF'
+root=$1
+echo "Current:  $(basename "$(readlink "$root/current" 2>/dev/null)" 2>/dev/null)"
+state=$(systemctl is-active fgdc 2>/dev/null)
+echo "Service:  ${state:-unknown}"
+echo "Releases: $(ls -t "$root/releases" | tr '\n' ' ')"
+echo
+echo "Last deploys (time, action, from, to, result, backup):"
+tail -n 10 "$root/deploys.log" 2>/dev/null | awk -F"\t" '{ printf "  %-20s  %-8s  %-29s  %-29s  %-6s  %s\n", $1, $2, $3, $4, $6, $5 }'
+EOF
+}
+
+cmd_log() {
+  local name=${1:-}
+  if [ -z "$name" ]; then
+    ssh "$HOST" "cat \"\$(ls -t $ROOT/logs/*.log | head -1)\""
+  else
+    ssh "$HOST" "cat '$ROOT/logs/${name%.log}.log'"
+  fi
+}
+
+cmd_setup() {
+  local user=${1:-} dir
+  dir=$(ssh "$HOST" mktemp -d)
+  scp -q -r "$REPO/deploy/vm/." "$HOST:$dir/"
+  ssh -t "$HOST" "sudo bash '$dir/setup.sh' $user; rm -rf '$dir'"
+}
+
+case ${1:-} in
+  build) shift; cmd_build "$@" ;;
+  deploy) shift; cmd_deploy "$@" ;;
+  rollback) shift; cmd_rollback "$@" ;;
+  replace-db) shift; cmd_replace_db "$@" ;;
+  restore-backup) shift; cmd_restore_backup "$@" ;;
+  status) shift; cmd_status "$@" ;;
+  log) shift; cmd_log "$@" ;;
+  setup) shift; cmd_setup "$@" ;;
+  build-machine) shift; cmd_build_machine "$@" ;;
+  *) sed -n '2,/^[^#]/p' "$0" | sed -e '$d' -e 's/^# \{0,1\}//' -e 's/NOTE([^)]*): //'; exit 2 ;;
+esac
