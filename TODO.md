@@ -1,5 +1,28 @@
 # TODO
 
+- [ ] Add keyboard shortcuts:
+  - [ ] Focus search
+  - [ ] Add dataset
+
+- [ ] Improvements to Location:
+  - [ ] only possible names: Sandbox, GS bucket, Web
+  - [ ] There is a direct 1:1 mapping between the Sandbox path and the GS bucket path, so maybe there is a way to have only one entry but have "copy Sanbox path" and "copy as gs://"
+
+- [ ] When adding a new dataset, it's unclear what the Submit and Discard buttons do.
+  - Does Submit publish it? or mark it as draft but keep the content?
+  - Does Discard erase it? or is it still saved as draft?
+
+- [ ] Modality column: when the value is too long, cut it at eg. 18 chars and show "...". Hovering over it instantly shows the full value using some kind of tooltip similar to the tooltip used on the years coverage plot.
+
+- [ ] Make an API to have the table data available, for example for use by FinnGenie.
+  - Use the data from the non-Editors view
+
+- [ ] Think if a "My draft" badge would make things more intuitive.
+  - For now somewhat counter-intuitive that a draft I own looks similar to other drafts for others, but others don't have the same actions (e.g. edit) on my draft.
+  - Either make all drafts the same (no "my draft"), no owning anymore; or change to My draft and have an intermediate "internal release" (need better name) action that would make the draft a "shared draft"
+
+- [ ] Fix double vertical scrolling on small screen + zoom.
+
 ## Follow-ups
 
 - [ ] Alerts for 500 errors: for now they only go to the journald logs on the VM, which is enough (decided 2026-11-18). Later, maybe an email from a logger handler (needs SMTP on the VM) or an error tracker (sends error details off-site).
