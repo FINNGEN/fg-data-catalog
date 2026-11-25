@@ -37,7 +37,7 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} main_class="catalog-main">
       <:header>
         <span :if={@last_updated} id="last-updated" class="last-updated">
           Last updated

@@ -447,3 +447,10 @@ Decided and done 2026-11-16. Replaces the admin / editor split and the `status` 
 ## Deploy with the dev database as the production one (2026-11-19)
 
 - [x] **Deploy, with the dev database as the production one** (no user had touched production): `deploy/fgdc setup` (installs the new `fgdc-deploy`), then `mix deploy` (first: the dev database has the "Not applicable" migration), then `deploy/fgdc replace-db` (see `deploy/README.md`, "Replacing the database"). NOTE(Claude Opus 5.5 2026-11-19)
+
+## Double vertical scrolling (2026-11-25)
+
+- [x] Fix double vertical scrolling on small screen + zoom.
+  - Cause: the table's box was `max-height: calc(100vh - 11rem)`, 11rem being a guess at the rest of the page. It left out the 2rem bottom padding of `.site-main`, the editors' "Add missing dataset" link and a header wrapped in a narrow or zoomed window, so the page scrolled too once the table was taller than its box (19 px for a visitor, 56 px for an editor at 1280×720; up to 128 px with a wrapped header).
+  - Done: the catalog page (`main_class="catalog-main"` on `Layouts.app`) is a flex column `100dvh` high, and the table's box takes the height left (it shrinks, never grows). Below 30rem of window the page scrolls, so that the table keeps some room. The archive page keeps the fixed `max-height`.
+  - Checked in headless Chrome (Playwright), on a copy of the dev database: no page scroll at 1600×1000, 1280×720 (visitor and editor), 800×600, 600×700 and 853×480 (1280×720 at 150%), header row stuck to the box, the box as short as the table on a search with few results; 640×360 (200%) and 1280×400 scroll the page by design (the 30rem floor). NOTE(Claude Opus 5.5 2026-11-25)

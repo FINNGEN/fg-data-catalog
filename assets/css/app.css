@@ -899,6 +899,44 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   background: var(--color-surface);
 }
 
+/* NOTE(Claude Opus 5.5 2026-11-25): the catalog page fills the window, and
+ * the table's box takes the height the rest leaves, so that only the box
+ * scrolls, never the page as well. The fixed `max-height` above guessed the
+ * rest at 11rem: too little for the main's bottom padding, the editors' "Add
+ * missing dataset" link and a header wrapped in a narrow or zoomed window.
+ * The box is never taller than the table (it shrinks, never grows). Under
+ * 30rem of window, the page scrolls, so that the table keeps some room. */
+[data-phx-main]:has(> .catalog-main) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 30rem;
+}
+
+.catalog-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.catalog-main > * {
+  flex: none;
+}
+
+.catalog-main > .table-frame {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.catalog-main > .table-frame > .table-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
 .catalog-table {
   border-collapse: separate;
   border-spacing: 0;

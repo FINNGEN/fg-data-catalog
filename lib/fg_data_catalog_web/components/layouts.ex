@@ -42,6 +42,10 @@ defmodule FGDataCatalogWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  # NOTE(Claude Opus 5.5 2026-11-25): the catalog page passes `catalog-main`,
+  # so that its table fills the window (see app.css).
+  attr :main_class, :string, default: nil, doc: "an extra class for `<main>`"
+
   slot :inner_block, required: true
   slot :header, doc: "extra content shown next to the site title"
 
@@ -481,7 +485,7 @@ defmodule FGDataCatalogWeb.Layouts do
       <.theme_switch />
     </header>
 
-    <main class="site-main">
+    <main class={["site-main", @main_class]}>
       {render_slot(@inner_block)}
     </main>
 

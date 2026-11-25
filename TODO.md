@@ -21,8 +21,6 @@
   - For now somewhat counter-intuitive that a draft I own looks similar to other drafts for others, but others don't have the same actions (e.g. edit) on my draft.
   - Either make all drafts the same (no "my draft"), no owning anymore; or change to My draft and have an intermediate "internal release" (need better name) action that would make the draft a "shared draft"
 
-- [ ] Fix double vertical scrolling on small screen + zoom.
-
 ## Follow-ups
 
 - [ ] Alerts for 500 errors: for now they only go to the journald logs on the VM, which is enough (decided 2026-11-18). Later, maybe an email from a logger handler (needs SMTP on the VM) or an error tracker (sends error details off-site).
