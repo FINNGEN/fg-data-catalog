@@ -729,28 +729,42 @@ label:has(> :is(.input, .select, .textarea):disabled) {
  * count, the tag filter, the Editor mode switch), so that the table does not
  * move as the filters change: centered, not on the baseline, where an empty
  * search count (no baseline) lowered the line. */
+/* NOTE(Claude Opus 5.5 2026-11-25): the count and the tag filter take the free
+ * width (`.table-filters`), so that Editor mode and Add missing dataset sit at
+ * the right end. In a narrow window, what does not fit moves onto a line
+ * above (`wrap-reverse`), at the right (`flex-end`): Add missing dataset
+ * first, then Editor mode. */
 .table-meta {
   display: flex;
-  /* NOTE(Claude 2026-11-12): from the left (the tag filter next to the count);
-   * the Editor mode switch is pushed right by its own `margin-left: auto`. */
-  justify-content: flex-start;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
   align-items: center;
-  gap: 1rem;
+  gap: 0.25rem 1rem;
   min-height: 1.75rem;
   margin: 0 0 0.5rem;
+}
+
+.table-filters {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: 1rem;
 }
 
 .table-meta .search-count {
   margin: 0;
 }
 
-/* NOTE(Claude 2026-11-10): the Viewer / Editor mode switch, right, with the
- * quick edit's hint before it in Editor mode. */
+/* NOTE(Claude Opus 5.5 2026-11-25): the Viewer / Editor mode switch, right,
+ * with the quick edit's hint before it in Editor mode. */
 .editor-mode {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  margin-left: auto;
+}
+
+.add-dataset {
+  white-space: nowrap;
 }
 
 .quick-edit-hint {
@@ -1863,10 +1877,6 @@ label:has(> :is(.input, .select, .textarea):disabled) {
 /* NOTE(Claude 2026-11-04): the new dataset and edit forms, each on a page of
  * its own (see dataset_form_components.ex): one field under the other, label
  * above input, in a column of readable width. */
-.add-dataset {
-  margin: 1rem 1rem 0;
-}
-
 /* NOTE(Claude 2026-11-12): wider side padding, room for the saved ticks in
  * the margin left of the fields (see `.saved-tick`). */
 .form-page {

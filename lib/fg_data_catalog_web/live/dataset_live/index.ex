@@ -87,32 +87,37 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
         <%!-- NOTE(Claude 2026-11-10): the search count and, on the same line, the
            quick edit's hint, so that the table loses no height. --%>
         <div class="table-meta">
-          <p id="search-count" class="search-count" role="status">
-            {search_count(@query, @tags, length(@datasets), length(@all_datasets))}
-          </p>
-          <%!-- NOTE(Claude 2026-11-12): the tags the rows are filtered by (a click
+          <%!-- NOTE(Claude Opus 5.5 2026-11-25): the count and the tag filter in
+             one box, which takes the line's free width, so that what follows
+             (Editor mode, Add missing dataset) sits at the right end. --%>
+          <div class="table-filters">
+            <p id="search-count" class="search-count" role="status">
+              {search_count(@query, @tags, length(@datasets), length(@all_datasets))}
+            </p>
+            <%!-- NOTE(Claude 2026-11-12): the tags the rows are filtered by (a click
              on a tag in the table adds it); each one removed by a click, all of
              them by Clear. --%>
-          <div :if={@tags != []} id="tag-filter" class="tag-filter">
-            <span class="tag-filter-label">Tagged</span>
-            <ul class="tags">
-              <li :for={tag <- @tags} class="is-tag-selected">
-                <.link
-                  patch={tag_filter_path(@list_params, tag)}
-                  title={"Stop filtering by “#{tag}”"}
-                  data-tag-filter={tag}
-                >
-                  {tag} <.icon name="hero-x-mark" class="tag-filter-remove" />
-                </.link>
-              </li>
-            </ul>
-            <.link
-              id="clear-tag-filter"
-              class="clear-tag-filter"
-              patch={clear_tag_filter_path(@list_params)}
-            >
-              Clear
-            </.link>
+            <div :if={@tags != []} id="tag-filter" class="tag-filter">
+              <span class="tag-filter-label">Tagged</span>
+              <ul class="tags">
+                <li :for={tag <- @tags} class="is-tag-selected">
+                  <.link
+                    patch={tag_filter_path(@list_params, tag)}
+                    title={"Stop filtering by “#{tag}”"}
+                    data-tag-filter={tag}
+                  >
+                    {tag} <.icon name="hero-x-mark" class="tag-filter-remove" />
+                  </.link>
+                </li>
+              </ul>
+              <.link
+                id="clear-tag-filter"
+                class="clear-tag-filter"
+                patch={clear_tag_filter_path(@list_params)}
+              >
+                Clear
+              </.link>
+            </div>
           </div>
           <%!-- NOTE(Claude 2026-11-10): the page opens in Viewer mode; editors
              switch to Editor mode (this button, or the M key) to quick edit: a
@@ -133,6 +138,14 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
               <.icon name="hero-pencil-square" /> Editor mode <kbd>M</kbd>
             </button>
           </div>
+          <%!-- NOTE(Claude Opus 5.5 2026-11-25): last on the line above the
+             table; when the line is too narrow, it moves onto a line of its
+             own above, at the right (see `.table-meta`). An unsaved new
+             dataset from an earlier visit is kept, and restored when the form
+             page is opened again. --%>
+          <.link :if={@can_edit} id="add-dataset" class="add-dataset" navigate={~p"/datasets/new"}>
+            {if @has_draft, do: "Continue adding dataset", else: "Add missing dataset"}
+          </.link>
         </div>
 
         <%!-- NOTE(Claude 2026-11-10): hovering a decade of a sparkline shows its
@@ -759,14 +772,6 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
       <p :if={@datasets == [] and @all_datasets != []} id="no-results" class="empty">
         <%!-- NOTE(Claude 2026-11-12): with the tag filter too. --%>
         {no_results(@query, @tags)}
-      </p>
-
-      <%!-- NOTE(Claude 2026-11-04): an unsaved new dataset from an earlier visit
-           is kept, and restored when the form page is opened again. --%>
-      <p :if={@can_edit} class="add-dataset">
-        <.link id="add-dataset" navigate={~p"/datasets/new"}>
-          {if @has_draft, do: "Continue adding dataset", else: "Add missing dataset"}
-        </.link>
       </p>
 
       <.modal
