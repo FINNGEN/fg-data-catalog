@@ -473,6 +473,10 @@ defmodule FGDataCatalogWeb.Layouts do
         }
       </script>
       {render_slot(@header)}
+      <%!-- NOTE(Claude-Opus-5.5 2026-11-25): in development only (like the
+           made-up users' sign-in page), a badge centred in the space between
+           the links and the account (see `.dev-mode` in app.css). --%>
+      <.dev_mode_badge />
       <%!-- NOTE(Claude 2026-11-06): who is signed in, or a way to sign in. --%>
       <span id="account" class="site-account">
         <%= if @current_scope && @current_scope.user do %>
@@ -529,8 +533,18 @@ defmodule FGDataCatalogWeb.Layouts do
   # well as Google (see `FGDataCatalogWeb.DevAuthController`).
   if Application.compile_env(:fg_data_catalog, :dev_routes) do
     defp sign_in_path, do: "/dev/sign-in"
+
+    # NOTE(Claude-Opus-5.5 2026-11-25): a component rather than an `:if`,
+    # which the type checker flags as always true or always false.
+    defp dev_mode_badge(assigns) do
+      ~H"""
+      <span id="dev-mode" class="dev-mode">DEVELOPER VERSION</span>
+      """
+    end
   else
     defp sign_in_path, do: ~p"/auth/google"
+
+    defp dev_mode_badge(assigns), do: ~H""
   end
 
   @doc """

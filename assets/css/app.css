@@ -332,6 +332,52 @@ input:is([type="number"], [type="date"]),
   font-size: 0.875rem;
 }
 
+/* NOTE(Claude-Opus-5.5 2026-11-25): "DEVELOPER VERSION", in development only
+ * (see layouts.ex): bold mono capitals in a square blue-green box, the one green
+ * in the app (development only, so it cannot be taken for the real thing).
+ * The text has 7:1 on the fill, the border 3:1 on the page and on the fill,
+ * in both themes. The border jumps between 2px and 3px, no tweening. It is
+ * an inset `box-shadow`, not a `border`: a shadow takes no room, so the box
+ * keeps its size and nothing on the page moves (an animated `border-width`,
+ * even offset by the padding, shifted the layout by subpixels). The padding
+ * leaves 1px between the 3px border and the text. Its two auto margins take
+ * all the free space, the account's left one dropping to 0, so it sits
+ * centred between the links on the left and the account. Still, at 2px,
+ * when the user asks for reduced motion. */
+.dev-mode {
+  --dev-mode-border: light-dark(oklch(0.56 0.095 195), oklch(0.6 0.1 195));
+  margin-inline: auto;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: light-dark(oklch(0.37 0.06 195), oklch(0.9 0.07 195));
+  background: light-dark(oklch(0.91 0.055 195), oklch(0.3 0.05 195));
+  box-shadow: inset 0 0 0 2px var(--dev-mode-border);
+}
+
+.dev-mode + .site-account {
+  margin-left: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dev-mode {
+    animation: dev-mode-border 2s steps(1) infinite;
+  }
+}
+
+@keyframes dev-mode-border {
+  0% {
+    box-shadow: inset 0 0 0 2px var(--dev-mode-border);
+  }
+  50%,
+  100% {
+    box-shadow: inset 0 0 0 3px var(--dev-mode-border);
+  }
+}
+
 /* NOTE(Claude Opus 5.5 2026-11-17): the theme switch (System, Light, Dark),
  * after the account: three icon buttons joined in one box, the chosen one
  * marked like the Editor mode switch when on. Marked from `data-theme` on
