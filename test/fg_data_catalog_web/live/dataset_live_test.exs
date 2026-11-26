@@ -45,6 +45,21 @@ defmodule FGDataCatalogWeb.DatasetLiveTest do
     refute has_element?(view, "#version-#{ctx.draft.id}")
   end
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): a modality list longer than 18
+  # characters is cut short, its full text in an instant tooltip.
+  test "a long modality list is cut short with its full text in a tooltip",
+       %{conn: conn, current: current, old: old} do
+    long = ["Electronic health records", "Genes"]
+    {:ok, _} = current |> Ecto.Changeset.change(modalities: long) |> FGDataCatalog.Repo.update()
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    full = "#modalities-#{current.id}[data-tip='Electronic health records, Genes']"
+    assert has_element?(view, "#{full} [aria-hidden='true']", ~r/^Electronic health…$/)
+    assert has_element?(view, "#{full} .visually-hidden", "Electronic health records, Genes")
+
+    assert has_element?(view, "#modalities-#{old.id}:not([data-tip])", "Text")
+  end
+
   # NOTE(Claude 2026-11-06): a previous version's row header names its dataset
   # for screen readers; visitors get no actions column.
   test "previous rows have a hidden row header, visitors no actions", %{conn: conn} = ctx do

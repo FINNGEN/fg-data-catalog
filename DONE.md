@@ -490,3 +490,8 @@ Decided and done 2026-11-16. Replaces the admin / editor split and the `status` 
     - The Add version page now also shows the dataset's name and description, as the edit page does: a name changed before the draft exists is saved through it once it is created (proposed, if the dataset has a Live version).
   - [x] No migration: the states are those of 2026-11-16 (Draft, Published, Archived).
   - [x] Side column of the form pages 17rem wide (from 84rem windows), so that the status fits on one line and Publish sits next to the other actions; the bottom bar's rule overhangs the fields; a disabled button keeps its look on hover, with a `not-allowed` cursor.
+
+## Truncated Modality values (2026-11-26)
+
+- [x] Modality column: when the value is too long, cut it at eg. 18 chars and show "...". Hovering over it instantly shows the full value using some kind of tooltip similar to the tooltip used on the years coverage plot.
+  - NOTE(Claude-Opus-5.5 2026-11-26): `truncated_text/1` in `catalog_components.ex` cuts at 18 characters and adds "…"; the full list is in the cell's `data-tip` (the instant tooltip, `instantTips` in app.js) and in visually hidden text for screen readers.

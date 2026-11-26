@@ -4,8 +4,6 @@
   - [ ] only possible names: Sandbox, GS bucket, Web
   - [ ] There is a direct 1:1 mapping between the Sandbox path and the GS bucket path, so maybe there is a way to have only one entry but have "copy Sanbox path" and "copy as gs://"
 
-- [ ] Modality column: when the value is too long, cut it at eg. 18 chars and show "...". Hovering over it instantly shows the full value using some kind of tooltip similar to the tooltip used on the years coverage plot.
-
 - [ ] Make an API to have the table data available, for example for use by FinnGenie.
   - Use the data from the non-Editors view
 

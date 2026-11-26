@@ -371,13 +371,17 @@ defmodule FGDataCatalogWeb.CatalogComponents do
           quick_edit={@quick_edit}
           field="modalities"
         />
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): a long modality list is cut
+             short, its full text in an instant tooltip (`data-tip`). --%>
         <span
           :if={!editing?(@quick_edit, @version, "modalities")}
+          id={"modalities-#{@version.id}"}
           class="stacked-value"
           data-quick-edit={@quick_editable && "modalities"}
+          data-tip={truncated?(join_values(@version.modalities)) && join_values(@version.modalities)}
           tabindex={@quick_editable && "-1"}
         >
-          <.text_or_dash text={join_values(@version.modalities)} words={@words} />
+          <.truncated_text text={join_values(@version.modalities)} words={@words} />
         </span>
         <.quick_inline
           :if={editing?(@quick_edit, @version, "formats")}
@@ -1004,6 +1008,52 @@ defmodule FGDataCatalogWeb.CatalogComponents do
     <% end %>
     """
   end
+
+  @truncate_at 18
+
+  @doc """
+  Renders `text` as `text_or_dash/1` does, cut to its first #{@truncate_at}
+  characters followed by "…" if it is longer (see `truncated?/1`). Screen
+  readers read the full text. The caller shows the full text on hover, e.g.
+  in a `data-tip`.
+  """
+  # NOTE(Claude-Opus-5.5 2026-11-26): the search words are highlighted in the
+  # part shown; a match in the part cut off shows in the tooltip only.
+  attr :text, :any, required: true
+  attr :words, :list, default: []
+
+  def truncated_text(assigns) do
+    if truncated?(assigns.text) do
+      assigns =
+        assign(
+          assigns,
+          :shown,
+          assigns.text
+          |> String.slice(0, @truncate_at)
+          |> String.trim_trailing()
+          |> String.trim_trailing(",")
+        )
+
+      ~H"""
+      <span aria-hidden="true">{highlight(@shown, @words)}…</span><span class="visually-hidden">{@text}</span>
+      """
+    else
+      ~H"""
+      <.text_or_dash text={@text} words={@words} />
+      """
+    end
+  end
+
+  @doc """
+  Whether `truncated_text/1` cuts `text` short.
+
+      iex> truncated?("Genes, Text")
+      false
+      iex> truncated?("Electronic health records, Genes")
+      true
+  """
+  def truncated?(text) when is_binary(text), do: String.length(text) > @truncate_at
+  def truncated?(_text), do: false
 
   @doc """
   `text`, HTML-escaped, with each occurrence of the search `words` (ignoring
