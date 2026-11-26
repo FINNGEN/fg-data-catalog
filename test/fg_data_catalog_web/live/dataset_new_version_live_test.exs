@@ -48,6 +48,10 @@ defmodule FGDataCatalogWeb.DatasetNewVersionLiveTest do
       |> follow_redirect(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
 
     assert has_element?(view, "#form-title", "Add a version of Kanta lab values")
+
+    # NOTE(Claude-Opus-5.5 2026-11-26): from 2016 to the end of next year.
+    {min, max} = FGDataCatalog.Catalog.DatasetVersion.release_date_bounds()
+    assert has_element?(view, "input[type=date][min='#{min}'][max='#{max}']")
     assert has_element?(view, "#prefilled-from", "R14")
     assert has_element?(view, "#version-form input[name='version[version]'][autofocus]")
     assert has_element?(view, "#version-form input[name='version[version]']:not([value])")

@@ -53,6 +53,20 @@ defmodule FGDataCatalog.Catalog.DatasetVersion do
   @doc "The years a coverage period may start or end in."
   def coverage_years, do: @coverage_years
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): the first year a release date input
+  # offers; the last is next year. Only the inputs are bounded, not the
+  # changeset, so dates already saved outside it stay valid.
+  @first_release_year 2016
+
+  @doc """
+  The first and last release dates the date inputs offer, as ISO 8601 strings:
+  from 2016 to the end of next year.
+  """
+  def release_date_bounds(today \\ Date.utc_today()) do
+    {Date.to_iso8601(Date.new!(@first_release_year, 1, 1)),
+     Date.to_iso8601(Date.new!(today.year + 1, 12, 31))}
+  end
+
   @doc "The total number of individuals in FinnGen, shared by all datasets."
   def finngen_total, do: @finngen_total
 

@@ -691,6 +691,7 @@ defmodule FGDataCatalogWeb.CatalogComponents do
       type={@type}
       aria-label={@label}
       min={@min}
+      max={@max}
       phx-mounted={JS.focus()}
       autocomplete="off"
     />
@@ -703,12 +704,15 @@ defmodule FGDataCatalogWeb.CatalogComponents do
   defp quick_list_field("formats"), do: {:formats, "Format (comma-separated)"}
 
   defp quick_input_attrs("version"),
-    do: [name: :version, type: "text", label: "Version", min: nil]
+    do: [name: :version, type: "text", label: "Version", min: nil, max: nil]
 
-  defp quick_input_attrs("release_date"),
-    do: [name: :release_date, type: "date", label: "Release date", min: nil]
+  defp quick_input_attrs("release_date") do
+    {min, max} = DatasetVersion.release_date_bounds()
+    [name: :release_date, type: "date", label: "Release date", min: min, max: max]
+  end
 
-  defp quick_input_attrs("lead"), do: [name: :lead, type: "text", label: "Maintainer", min: nil]
+  defp quick_input_attrs("lead"),
+    do: [name: :lead, type: "text", label: "Maintainer", min: nil, max: nil]
 
   @doc """
   Renders a modal dialog that closes by patching to `close_to`.

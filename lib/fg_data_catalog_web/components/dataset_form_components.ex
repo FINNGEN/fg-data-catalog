@@ -285,6 +285,8 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
       field={@form[:release_date]}
       type="date"
       label="Release date"
+      min={first_release_date()}
+      max={last_release_date()}
       saved={"release_date" in @saved}
       mark_required
     />
@@ -651,6 +653,8 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
 
   defp first_coverage_year, do: DatasetVersion.coverage_years().first
   defp last_coverage_year, do: DatasetVersion.coverage_years().last
+  defp first_release_date, do: elem(DatasetVersion.release_date_bounds(), 0)
+  defp last_release_date, do: elem(DatasetVersion.release_date_bounds(), 1)
 
   # NOTE(Claude 2026-11-10): whether `version_fields/1` shows `field` (`:years`
   # is the coverage period and the yearly counts).

@@ -89,6 +89,15 @@ defmodule FGDataCatalogWeb.QuickEditLiveTest do
     assert has_element?(view, "#version-#{ctx.old.id} [data-quick-edit='dataset']")
   end
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): from 2016 to the end of next year.
+  test "the release date input is bounded", %{conn: conn} = ctx do
+    view = open_editor_mode(conn)
+    quick_edit(view, ctx.current, "release_date")
+    {min, max} = FGDataCatalog.Catalog.DatasetVersion.release_date_bounds()
+
+    assert has_element?(view, "#quick-edit-form input[type=date][min='#{min}'][max='#{max}']")
+  end
+
   test "the dataset's name is quick edited through a previous version", %{conn: conn} = ctx do
     view = open_editor_mode(conn)
 

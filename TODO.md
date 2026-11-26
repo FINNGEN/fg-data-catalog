@@ -25,8 +25,6 @@
 - [ ] Add version page: change behavior to save as draft as the user fills the page. 
   Currently nothing is saved until the user hits Submit, which is not consistent with the other pages.
 
-- [ ] Date input fields: change `<input>` min to 2016 and max to a current year + 1.
-
 ## Follow-ups
 
 - [ ] Alerts for 500 errors: for now they only go to the journald logs on the VM, which is enough (decided 2026-11-18). Later, maybe an email from a logger handler (needs SMTP on the VM) or an error tracker (sends error details off-site).
