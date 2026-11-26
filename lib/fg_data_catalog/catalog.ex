@@ -263,7 +263,8 @@ defmodule FGDataCatalog.Catalog do
   @doc """
   Like `list_tags/0`, for the environments (where the data can be used).
   """
-  # NOTE(Claude 2026-11-10): for the catalog's quick edit of Environment.
+  # NOTE(Claude-Opus-5.5 2026-11-26): for the Environments field, on the edit
+  # page and in the catalog's quick edit.
   def list_environments, do: distinct_values(:environments)
 
   # NOTE(Claude 2026-11-06): archived versions no longer feed the suggestions.

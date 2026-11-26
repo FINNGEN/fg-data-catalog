@@ -178,12 +178,13 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
 
   @impl true
   def mount(params, _session, socket) do
-    # NOTE(Claude 2026-11-04): existing values, suggested while typing the Tags,
-    # Modality and Format fields.
+    # NOTE(Claude-Opus-5.5 2026-11-26): existing values, suggested while typing
+    # the Tags, Environments, Modality and Format fields.
     socket =
       socket
       |> assign(:suggestions, %{
         tags: Catalog.list_tags(),
+        environments: Catalog.list_environments(),
         modalities: Catalog.list_modalities(),
         formats: Catalog.list_formats()
       })

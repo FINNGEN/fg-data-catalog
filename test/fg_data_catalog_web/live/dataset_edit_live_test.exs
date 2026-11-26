@@ -50,10 +50,11 @@ defmodule FGDataCatalogWeb.DatasetEditLiveTest do
     assert has_element?(index, ".catalog-table")
   end
 
-  test "the Tags, Modality and Format fields suggest existing values", %{conn: conn} = ctx do
+  test "the Tags, Environments, Modality and Format fields suggest existing values",
+       %{conn: conn} = ctx do
     {:ok, view, _html} = live(conn, ~p"/versions/#{ctx.current.id}/edit")
 
-    for field <- ~w(tags modalities formats) do
+    for field <- ~w(tags environments modalities formats) do
       assert has_element?(
                view,
                "#edit-form input[phx-hook$='.TokenSuggest'][data-suggestions][data-list$='#{field}-suggestions']"

@@ -472,3 +472,8 @@ Decided and done 2026-11-16. Replaces the admin / editor split and the `status` 
 
 - [x] Date input fields: change `<input>` min to 2016 and max to a current year + 1.
   - Both release date inputs (the dataset form and the catalog quick edit) go from 2016-01-01 to December 31 of next year. Only the inputs are bounded, not the changeset.
+
+## Environments suggestions (2026-11-26)
+
+- [x] Environments field: use same suggestion behavior as Tags.
+  - The dataset add/edit page suggests the environments in use while typing, as Tags, Modality and Format do (the catalog quick edit already did). Still free text.

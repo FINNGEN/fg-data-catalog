@@ -20,8 +20,6 @@
 - [ ] Add inline help (behing a (?) icon, or marked with special underline) where it makes sense.
   For example on "OMOP-mapped".
 
-- [ ] Environments field: use same suggestion behavior as Tags.
-
 - [ ] Add version page: change behavior to save as draft as the user fills the page. 
   Currently nothing is saved until the user hits Submit, which is not consistent with the other pages.
 

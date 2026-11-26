@@ -428,13 +428,13 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
         }
       }
     </script>
-    <.input
+    <%!-- NOTE(Claude-Opus-5.5 2026-11-26): suggests the environments in use, as Tags. --%>
+    <.suggest_input
       :if={show_field?(@only, :environments)}
       field={@form[:environments]}
-      type="text"
       label="Environments (comma-separated)"
-      value={join_list(@form[:environments].value)}
-      phx-debounce={@debounce}
+      suggestions={Map.get(@suggestions, :environments, [])}
+      debounce={@debounce}
       saved={"environments" in @saved}
     />
     <.input
