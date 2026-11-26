@@ -31,8 +31,8 @@ defmodule FGDataCatalogWeb.KeyboardShortcutsLiveTest do
     {:ok, form, _html} =
       view |> element("#add-dataset") |> render_click() |> follow_redirect(conn)
 
-    assert has_element?(form, "#dataset-form input[name='dataset[name]'][autofocus]")
-    assert has_element?(form, "#dataset-form input[name='dataset[name]'][phx-mounted*='focus']")
+    assert has_element?(form, "#edit-form input[name='edit_dataset[name]'][autofocus]")
+    assert has_element?(form, "#edit-form input[name='edit_dataset[name]'][phx-mounted*='focus']")
   end
 
   # NOTE(Claude-Opus-5.5 2026-11-26): Escape leaves the field, then the page

@@ -11,7 +11,7 @@ defmodule FGDataCatalogWeb.DatasetNameHolderLiveTest do
 
   defp type_name(conn, name) do
     {:ok, view, _html} = live(conn, ~p"/datasets/new")
-    view |> form("#dataset-form", dataset: %{name: name}) |> render_change()
+    view |> form("#edit-form", edit_dataset: %{name: name}) |> render_change()
     view
   end
 
@@ -33,7 +33,9 @@ defmodule FGDataCatalogWeb.DatasetNameHolderLiveTest do
   end
 
   # NOTE(Claude 2026-11-16): every editor gets the links, no longer admins only.
-  test "an archived dataset's name: links to unarchive it or add a version, explained on Submit",
+  # NOTE(Claude-Opus-5.5 2026-11-26): no more Submit: the note stays while
+  # the form is valid but for the name.
+  test "an archived dataset's name: links to unarchive it or add a version, kept when the rest is valid",
        %{conn: conn} do
     dataset = dataset_fixture(%{name: "Old one"})
     {:ok, _} = Catalog.archive_version(scope_fixture(:other_editor), version_fixture(dataset))
@@ -43,8 +45,12 @@ defmodule FGDataCatalogWeb.DatasetNameHolderLiveTest do
     assert has_element?(view, "#name-holder-archive[href='/archive']")
     assert has_element?(view, "#name-holder-add-version")
 
-    view |> form("#dataset-form") |> render_submit()
+    view
+    |> form("#edit-form", edit_version: %{version: "R1", release_date: "2026-01-01"})
+    |> render_change()
+
     assert has_element?(view, "#name-holder", "archived dataset")
+    assert has_element?(view, "#edit-form", "has already been taken")
   end
 
   # NOTE(Claude 2026-11-16): every editor sees every Draft: the dataset is in

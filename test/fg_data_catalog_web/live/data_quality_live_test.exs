@@ -206,22 +206,21 @@ defmodule FGDataCatalogWeb.DataQualityLiveTest do
   end
 
   test "the new dataset draft keeps the answers", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/datasets/new")
-
-    view
-    |> form("#dataset-form",
-      dataset: %{
-        name: "Half done",
-        versions: %{"0" => %{"data_quality" => %{"documented" => "yes", "in_one_piece" => "no"}}}
-      }
-    )
-    |> render_change()
+    # NOTE(Claude-Opus-5.5 2026-11-26): an autosave from before the optional
+    # fields were locked until the draft exists.
+    {:ok, _} =
+      FGDataCatalog.Catalog.save_dataset_draft(user_id(:editor), %{
+        "name" => "Half done",
+        "versions" => %{
+          "0" => %{"data_quality" => %{"documented" => "yes", "in_one_piece" => "no"}}
+        }
+      })
 
     {:ok, index, _html} = live(conn, ~p"/")
     assert has_element?(index, "#add-dataset", "Continue adding dataset")
 
     {:ok, view, _html} = live(conn, ~p"/datasets/new")
-    prefix = "#dataset_versions_0_data_quality"
+    prefix = "#edit_version_data_quality"
     assert has_element?(view, "#{prefix}_documented_yes[checked]")
     assert has_element?(view, "#{prefix}_in_one_piece_no[checked]")
     assert has_element?(view, "#{prefix}_quality_checked_unknown[checked]")
@@ -230,14 +229,14 @@ defmodule FGDataCatalogWeb.DataQualityLiveTest do
 
   test "a new version starts with the answers of its source", %{conn: conn} = ctx do
     {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
-    assert has_element?(view, "#version_data_quality_in_one_piece_yes[checked]")
-    assert has_element?(view, "#version_data_quality_documented_no[checked]")
+    assert has_element?(view, "#edit_version_data_quality_in_one_piece_yes[checked]")
+    assert has_element?(view, "#edit_version_data_quality_documented_no[checked]")
 
     view
-    |> form("#version-form",
-      version: %{version: "v3", release_date: "2026-09-01", cohort_size: "10"}
+    |> form("#edit-form",
+      edit_version: %{version: "v3", release_date: "2026-09-01", cohort_size: "10"}
     )
-    |> render_submit()
+    |> render_change()
 
     version = Repo.get_by!(DatasetVersion, dataset_id: ctx.dataset.id, version: "v3")
 

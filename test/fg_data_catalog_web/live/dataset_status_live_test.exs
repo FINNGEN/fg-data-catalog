@@ -48,14 +48,14 @@ defmodule FGDataCatalogWeb.DatasetStatusLiveTest do
     {:published, :other_editor, :read, [:write, :unpublish, :archive]},
     {:published, :owner, :read, [:write, :unpublish, :archive]},
     {:draft, :visitor, :hidden, []},
-    {:draft, :other_editor, :read, [:archive]},
-    {:draft, :owner, :read, [:write, :publish, :archive]},
+    {:draft, :other_editor, :read, [:write, :publish, :delete]},
+    {:draft, :owner, :read, [:write, :publish, :delete]},
     {:archived, :visitor, :hidden, []},
     {:archived, :other_editor, :read, [:unarchive]},
     {:archived, :owner, :read, [:unarchive]}
   ]
 
-  @actions [:write, :publish, :unpublish, :archive, :unarchive]
+  @actions [:write, :publish, :delete, :unpublish, :archive, :unarchive]
 
   defp conn_for(:visitor), do: build_conn()
   defp conn_for(:other_editor), do: log_in(build_conn(), :other_editor)
@@ -84,6 +84,7 @@ defmodule FGDataCatalogWeb.DatasetStatusLiveTest do
         assert has_element?(view, "#publish-version-#{version.id}") == :publish in @allowed
         assert has_element?(view, "#unpublish-version-#{version.id}") == :unpublish in @allowed
         assert has_element?(view, "#archive-version-#{version.id}") == :archive in @allowed
+        assert has_element?(view, "#delete-version-#{version.id}") == :delete in @allowed
 
         assert has_element?(view, "#version-#{version.id} [data-quick-edit]") ==
                  :write in @allowed
@@ -183,19 +184,31 @@ defmodule FGDataCatalogWeb.DatasetStatusLiveTest do
       refute has_element?(view, "#archived-version-#{versions.archived.id}")
     end
 
-    @tag role: :other_editor
-    test "taking over someone else's Draft: archive it, then unarchive it",
+    # NOTE(Claude-Opus-5.5 2026-11-26): "My draft" for its owner, "Draft" for
+    # the others, with its owner in an instant tooltip (`data-tip`).
+    test "the badge reads My draft for its owner, Draft by its owner for the others",
          %{conn: conn, versions: versions} do
+      id = versions.draft.id
       {:ok, view, _html} = live(conn, ~p"/")
-      refute has_element?(view, "#edit-version-#{versions.draft.id}")
-      view |> element("#archive-version-#{versions.draft.id}") |> render_click()
+      assert has_element?(view, "#status-#{id}.status-draft.is-mine", "My draft")
+      assert has_element?(view, "#status-#{id}[data-tip^='Your draft']")
+      refute has_element?(view, "#status-#{id}[title]")
 
-      {:ok, archive, _html} = live(conn, ~p"/archive")
-      archive |> element("#unarchive-version-#{versions.draft.id}") |> render_click()
+      {:ok, other, _html} = live(conn_for(:other_editor), ~p"/")
+      assert has_element?(other, "#status-#{id}.status-draft:not(.is-mine)", "Draft")
+      refute has_element?(other, "#status-#{id}", "My draft")
+      assert has_element?(other, "#status-#{id}[data-tip='Draft by editor@finngen.fi']")
+    end
 
+    @tag role: :other_editor
+    test "another editor deletes someone's Draft", %{conn: conn, versions: versions} do
+      id = versions.draft.id
       {:ok, view, _html} = live(conn, ~p"/")
-      assert has_element?(view, "#edit-version-#{versions.draft.id}")
-      assert has_element?(view, "#publish-version-#{versions.draft.id}")
+      view |> element("#delete-version-#{id}") |> render_click()
+
+      assert Repo.get(DatasetVersion, id) == nil
+      refute has_element?(view, "#version-#{id}")
+      assert_replayable()
     end
   end
 
@@ -217,7 +230,7 @@ defmodule FGDataCatalogWeb.DatasetStatusLiveTest do
       test "is the dataset's top row for #{actor}", %{newest: newest} do
         {:ok, view, _html} = live(conn_for(@actor), ~p"/")
         assert has_element?(view, "#version-#{newest.id}.current-version")
-        assert has_element?(view, "#status-#{newest.id}.status-draft[title*='someone-else']")
+        assert has_element?(view, "#status-#{newest.id}.status-draft[data-tip*='someone-else']")
       end
     end
 
@@ -233,28 +246,24 @@ defmodule FGDataCatalogWeb.DatasetStatusLiveTest do
   test "a new dataset is a Draft owned by its creator", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/datasets/new")
 
-    {:ok, index, _html} =
-      view
-      |> form("#dataset-form")
-      |> render_submit(%{
-        "dataset" => %{
-          "name" => "New one",
-          "versions" => %{
-            "0" => %{
-              "version" => "R1",
-              "release_date" => "2026-01-01",
-              "lead" => "Jane",
-              "access_type" => "red",
-              "cohort_size" => "10"
-            }
-          }
-        }
-      })
-      |> follow_redirect(conn, ~p"/")
+    view
+    |> form("#edit-form")
+    |> render_change(%{
+      "edit_dataset" => %{"name" => "New one"},
+      "edit_version" => %{
+        "version" => "R1",
+        "release_date" => "2026-01-01",
+        "lead" => "Jane",
+        "access_type" => "red",
+        "cohort_size" => "10"
+      }
+    })
 
     version = Repo.get_by!(DatasetVersion, version: "R1", owning_editor_id: user_id(:editor))
     assert version.state == :draft
-    assert has_element?(index, "#status-#{version.id}.status-draft")
+
+    {:ok, index, _html} = live(conn, ~p"/")
+    assert has_element?(index, "#status-#{version.id}.status-draft", "My draft")
     assert has_element?(index, "#publish-version-#{version.id}")
     assert Catalog.list_published_datasets() |> Enum.all?(&(&1.name != "New one"))
   end

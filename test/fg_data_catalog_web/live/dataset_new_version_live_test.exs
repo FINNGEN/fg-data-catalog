@@ -31,11 +31,12 @@ defmodule FGDataCatalogWeb.DatasetNewVersionLiveTest do
   end
 
   # NOTE(Claude Opus 5.5 2026-11-17): the individuals covered are no longer
-  # prefilled (see `Catalog.new_version_params/1`), so each submit gives them
-  # (optional, but checked after submit).
-  defp submit(view, params) do
+  # prefilled (see `Catalog.new_version_params/1`), so each change gives them.
+  # NOTE(Claude-Opus-5.5 2026-11-26): no Submit: a change that makes the form
+  # valid creates the draft.
+  defp change(view, params) do
     params = Map.put_new(params, "cohort_size", "1000")
-    view |> form("#version-form") |> render_submit(%{"version" => params})
+    view |> form("#edit-form") |> render_change(%{"edit_version" => params})
   end
 
   test "Add version opens a form prefilled from the latest version", %{conn: conn} = ctx do
@@ -53,36 +54,52 @@ defmodule FGDataCatalogWeb.DatasetNewVersionLiveTest do
     {min, max} = FGDataCatalog.Catalog.DatasetVersion.release_date_bounds()
     assert has_element?(view, "input[type=date][min='#{min}'][max='#{max}']")
     assert has_element?(view, "#prefilled-from", "R14")
-    assert has_element?(view, "#version-form input[name='version[version]'][autofocus]")
-    assert has_element?(view, "#version-form input[name='version[version]']:not([value])")
-    assert has_element?(view, "#version-form input[name='version[lead]'][value='Jane Doe']")
-    assert has_element?(view, "#version-form input[name='version[tags]'][value='Phenotype']")
+    assert has_element?(view, "#edit-form input[name='edit_version[version]'][autofocus]")
+    assert has_element?(view, "#edit-form input[name='edit_version[version]']:not([value])")
+    assert has_element?(view, "#edit-form input[name='edit_version[lead]'][value='Jane Doe']")
+    assert has_element?(view, "#edit-form input[name='edit_version[tags]'][value='Phenotype']")
     # NOTE(Claude 2026-11-10): the coverage period and individuals covered
     # change with each release, so they start empty.
-    assert has_element?(view, "#version-form input[name='version[cohort_size]']:not([value])")
-    assert has_element?(view, "#version-form input[name='version[coverage_start]']:not([value])")
-    assert has_element?(view, "#version-form input[name='version[coverage_end]']:not([value])")
+    assert has_element?(view, "#edit-form input[name='edit_version[cohort_size]']:not([value])")
 
     assert has_element?(
              view,
-             "#version-form input[type='radio'][name='version[omop_integration]'][value='no'][checked]"
+             "#edit-form input[name='edit_version[coverage_start]']:not([value])"
+           )
+
+    assert has_element?(view, "#edit-form input[name='edit_version[coverage_end]']:not([value])")
+
+    assert has_element?(
+             view,
+             "#edit-form input[type='radio'][name='edit_version[omop_integration]'][value='no'][checked]"
            )
 
     assert has_element?(
              view,
-             "#version-form input[name='version[doc_links][0][url]'][value='https://example.org/README']"
+             "#edit-form input[name='edit_version[doc_links][0][url]'][value='https://example.org/README']"
            )
   end
 
-  test "Submit adds the version, which becomes the current one", %{conn: conn} = ctx do
+  test "opening the page creates nothing", %{conn: conn} = ctx do
     {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
+    change(view, %{"lead" => "John Doe"})
 
-    {:ok, index, _html} =
-      view
-      |> submit(%{"version" => "R15", "release_date" => "2026-09-01"})
-      |> follow_redirect(conn, ~p"/")
+    assert Repo.aggregate(DatasetVersion, :count) == 1
+    assert has_element?(view, "#edit-status", "Fill in Version and Release date")
+    assert has_element?(view, "fieldset#optional-fields[disabled]")
+    assert has_element?(view, "#edit-publish[disabled]")
+  end
+
+  test "a valid form creates a Draft, which becomes the current version",
+       %{conn: conn} = ctx do
+    {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
+    change(view, %{"version" => "R15", "release_date" => "2026-09-01"})
 
     version = Repo.get_by!(DatasetVersion, dataset_id: ctx.dataset.id, version: "R15")
+    assert_patch(view, ~p"/versions/#{version.id}/edit")
+    assert has_element?(view, "#status-#{version.id}", "My draft")
+    {:ok, index, _html} = live(conn, ~p"/")
+
     assert version.lead == "Jane Doe"
     assert version.tags == ["Phenotype"]
     assert version.omop_integration == :no
@@ -96,15 +113,55 @@ defmodule FGDataCatalogWeb.DatasetNewVersionLiveTest do
 
     assert has_element?(index, "#version-#{version.id}.current-version")
     assert has_element?(index, "#version-#{ctx.current.id}.previous-version")
+
+    # NOTE(Claude-Opus-5.5 2026-11-26): another editor sees it on top too.
+    assert [%{versions: [%{id: id}, %{id: current_id}]}] =
+             Catalog.list_datasets(scope_fixture(:other_editor))
+
+    assert {id, current_id} == {version.id, ctx.current.id}
     assert_replayable()
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): the optional fields are disabled until
+  # the draft exists, and a browser does not send them: the prefill is kept.
+  test "the draft keeps the prefilled values the browser does not send", %{conn: conn} = ctx do
+    {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
+
+    render_change(view, "validate", %{
+      "edit_dataset" => %{"name" => "Kanta lab values"},
+      "edit_version" => %{"version" => "R15", "release_date" => "2026-09-01"}
+    })
+
+    version = Repo.get_by!(DatasetVersion, dataset_id: ctx.dataset.id, version: "R15")
+    assert %{lead: "Jane Doe", tags: ["Phenotype"], omop_integration: :no} = version
+    assert [%{label: "README"}] = version.doc_links
+    refute has_element?(view, "fieldset[disabled]")
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): saved through the new draft, which
+  # proposes them, as the dataset has a Published version.
+  test "a changed dataset name is proposed by the new draft", %{conn: conn} = ctx do
+    {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
+
+    view
+    |> form("#edit-form")
+    |> render_change(%{
+      "edit_dataset" => %{"name" => "Kanta lab results"},
+      "edit_version" => %{"version" => "R15", "release_date" => "2026-09-01"}
+    })
+
+    version = Repo.get_by!(DatasetVersion, dataset_id: ctx.dataset.id, version: "R15")
+    assert version.dataset_name == "Kanta lab results"
+    assert Repo.reload!(ctx.dataset).name == "Kanta lab values"
+    assert has_element?(view, "#form-title", "Edit Kanta lab results R15")
   end
 
   test "errors are shown and nothing is saved", %{conn: conn} = ctx do
     {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
 
-    submit(view, %{"version" => "R14", "release_date" => "2026-09-01"})
+    change(view, %{"version" => "R14", "release_date" => "2026-09-01"})
 
-    assert has_element?(view, "#version-form", "has already been taken")
+    assert has_element?(view, "#edit-form", "has already been taken")
     assert Repo.aggregate(DatasetVersion, :count) == 1
   end
 
@@ -125,7 +182,7 @@ defmodule FGDataCatalogWeb.DatasetNewVersionLiveTest do
 
     {:ok, view, _html} = live(conn, ~p"/datasets/#{ctx.dataset.id}/versions/new")
     assert has_element?(view, "#prefilled-from", "R14")
-    submit(view, %{"version" => "R15", "release_date" => "2026-09-01"})
+    change(view, %{"version" => "R15", "release_date" => "2026-09-01"})
 
     assert Catalog.list_published_datasets() == []
 

@@ -453,7 +453,8 @@ defmodule FGDataCatalogWeb.QuickEditLiveTest do
 
   # NOTE(Claude 2026-11-16): see `Catalog.can?/3`.
   describe "write rights" do
-    test "cannot quick edit someone else's draft", %{conn: conn} = ctx do
+    # NOTE(Claude-Opus-5.5 2026-11-26): a Draft is every editor's.
+    test "quick edits someone else's Draft", %{conn: conn} = ctx do
       draft =
         version_fixture(ctx.dataset, %{version: "R15", release_date: ~D[2026-09-01]},
           state: :draft,
@@ -463,7 +464,7 @@ defmodule FGDataCatalogWeb.QuickEditLiveTest do
       view = open_editor_mode(conn)
 
       quick_edit(view, draft, "lead")
-      refute has_element?(view, "#quick-edit-form")
+      assert has_element?(view, "#quick-edit-form")
     end
 
     test "quick edits a published version", %{conn: conn} = ctx do
@@ -476,7 +477,9 @@ defmodule FGDataCatalogWeb.QuickEditLiveTest do
     end
 
     # NOTE(Claude 2026-11-16): checked again on save, against the database.
-    test "a quick save on a Draft taken over meanwhile is refused", %{conn: conn} = ctx do
+    # NOTE(Claude-Opus-5.5 2026-11-26): archived meanwhile, no longer taken
+    # over (any editor may write a Draft).
+    test "a quick save on a version archived meanwhile is refused", %{conn: conn} = ctx do
       draft =
         version_fixture(ctx.dataset, %{version: "R15", release_date: ~D[2026-09-01]},
           state: :draft,
@@ -487,9 +490,9 @@ defmodule FGDataCatalogWeb.QuickEditLiveTest do
       quick_edit(view, draft, "lead")
       assert has_element?(view, "#quick-edit-form")
 
-      # Taken over without telling the page (no broadcast).
+      # Archived without telling the page (no broadcast).
       Repo.update_all(from(v in DatasetVersion, where: v.id == ^draft.id),
-        set: [owning_editor_id: user_id(:other_editor)]
+        set: [state: :archived]
       )
 
       view |> form("#quick-edit-form", quick_version: %{lead: "Mine"}) |> render_submit()

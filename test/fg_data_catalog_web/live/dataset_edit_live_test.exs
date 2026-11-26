@@ -448,18 +448,20 @@ defmodule FGDataCatalogWeb.DatasetEditLiveTest do
 
   test "the edit page never creates the new dataset draft", %{conn: conn} = ctx do
     {:ok, view, _html} = live(conn, ~p"/datasets/new")
-    render_change(view, "validate", %{"dataset" => %{"name" => "Half done"}})
+    render_change(view, "validate", %{"edit_dataset" => %{"name" => "Half done"}})
 
     view = edit_row(conn, ctx.current)
 
     # NOTE(Claude 2026-11-04): Enter in the edit form submits it, which only saves
     # the edit; neither it nor stray new-dataset events may touch the draft.
+    # NOTE(Claude-Opus-5.5 2026-11-26): the new dataset page's events are now
+    # the edit page's; Delete draft is refused on a Published version.
     view |> form("#edit-form", edit_version: %{lead: "x"}) |> render_submit()
     assert has_element?(view, "#edit-status", "Saved.")
-    render_submit(view, "save", %{"dataset" => %{"name" => "Sneaky"}})
-    render_change(view, "validate", %{"dataset" => %{"name" => "Sneaky"}})
-    render_click(view, "discard", %{})
+    render_change(view, "validate", %{"edit_dataset" => %{"name" => "Sneaky"}})
+    render_click(view, "delete_draft", %{})
     assert Repo.aggregate(Dataset, :count) == 1
+    assert Repo.get!(Dataset, ctx.dataset.id).name != "Sneaky"
 
     {:ok, index, _html} = live(conn, ~p"/")
 
@@ -469,7 +471,7 @@ defmodule FGDataCatalogWeb.DatasetEditLiveTest do
       |> render_click()
       |> follow_redirect(conn, ~p"/datasets/new")
 
-    assert has_element?(new, "#dataset-form input[name='dataset[name]'][value='Half done']")
+    assert has_element?(new, "#edit-form input[name='edit_dataset[name]'][value='Half done']")
   end
 
   # NOTE(Claude 2026-11-06): someone else's changes to the row being edited.
@@ -699,25 +701,20 @@ defmodule FGDataCatalogWeb.DatasetEditLiveTest do
       refute has_element?(edit_row(conn, ctx.current), "#edit-publish")
     end
 
-    test "the edit page is left when the version is taken over meanwhile",
+    # NOTE(Claude-Opus-5.5 2026-11-26): archived by another editor (any
+    # editor may write a Draft: it can no longer be taken over).
+    test "the edit page is left when the version leaves the viewer's hands meanwhile",
          %{conn: conn} = ctx do
-      draft =
-        version_fixture(ctx.dataset, %{version: "R15", release_date: ~D[2026-09-01]},
-          state: :draft,
-          owning_editor_id: user_id(:editor)
-        )
-
-      view = edit_row(conn, draft)
-      other = scope_fixture(:other_editor)
-      {:ok, _} = FGDataCatalog.Catalog.archive_version(other, draft)
-      {:ok, _} = FGDataCatalog.Catalog.unarchive_version(other, draft)
+      view = edit_row(conn, ctx.current)
+      {:ok, _} = FGDataCatalog.Catalog.archive_version(scope_fixture(:other_editor), ctx.current)
 
       assert_redirect(view, ~p"/")
     end
 
     # NOTE(Claude 2026-11-16): the save itself is refused, whatever the page
     # holds: the server check reads the version from the database.
-    test "a save on a version taken over meanwhile is refused", %{conn: conn} = ctx do
+    # NOTE(Claude-Opus-5.5 2026-11-26): archived meanwhile.
+    test "a save on a version archived meanwhile is refused", %{conn: conn} = ctx do
       draft =
         version_fixture(ctx.dataset, %{version: "R15", release_date: ~D[2026-09-01]},
           state: :draft,
@@ -725,9 +722,9 @@ defmodule FGDataCatalogWeb.DatasetEditLiveTest do
         )
 
       view = edit_row(conn, draft)
-      # Taken over without telling the page (no broadcast).
+      # Archived without telling the page (no broadcast).
       Repo.update_all(from(v in DatasetVersion, where: v.id == ^draft.id),
-        set: [owning_editor_id: user_id(:other_editor)]
+        set: [state: :archived]
       )
 
       view

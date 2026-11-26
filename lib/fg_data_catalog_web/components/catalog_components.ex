@@ -55,7 +55,12 @@ defmodule FGDataCatalogWeb.CatalogComponents do
     # `Catalog.can?/3`), and the dataset as the version shows it (a Draft's
     # proposed name and description, see `Catalog.proposed_dataset/2`).
     %{scope: scope, version: version} = assigns
-    can = Map.new(~w(write publish unpublish archive)a, &{&1, Catalog.can?(scope, &1, version)})
+
+    can =
+      Map.new(
+        ~w(write publish delete unpublish archive)a,
+        &{&1, Catalog.can?(scope, &1, version)}
+      )
 
     assigns =
       assign(assigns,
@@ -119,6 +124,7 @@ defmodule FGDataCatalogWeb.CatalogComponents do
                 id={"status-#{@version.id}"}
                 state={@version.state}
                 owner={@version.owning_editor}
+                viewer_id={Scope.user_id(@scope)}
               />
             </span>
             <%!-- NOTE(Claude 2026-11-04): opens the version's edit form page. --%>
@@ -183,10 +189,10 @@ defmodule FGDataCatalogWeb.CatalogComponents do
                     <.icon name="hero-clock" /> History
                   </.link>
                 </li>
-                <%!-- NOTE(Claude 2026-11-16): Publish (a Draft, for its owning
-                     editor) makes it visible to everyone; Unpublish (a Published
-                     version, for any editor) turns it back into a Draft owned by
-                     the viewer. Buttons: they act, they do not navigate. --%>
+                <%!-- NOTE(Claude-Opus-5.5 2026-11-26): Publish (a Draft) makes it
+                     visible to everyone; Unpublish (a Published version) turns it
+                     back into a Draft owned by the viewer. Buttons: they act, they
+                     do not navigate. --%>
                 <li :if={@can.publish}>
                   <button
                     type="button"
@@ -218,6 +224,20 @@ defmodule FGDataCatalogWeb.CatalogComponents do
                     phx-value-id={@version.id}
                   >
                     <.icon name="hero-archive-box" /> Archive
+                  </button>
+                </li>
+                <%!-- NOTE(Claude-Opus-5.5 2026-11-26): a draft is deleted for good,
+                     not archived (the changelog can still revert it). --%>
+                <li :if={@can.delete}>
+                  <button
+                    type="button"
+                    id={"delete-version-#{@version.id}"}
+                    class="delete-version menu-action"
+                    phx-click="delete"
+                    phx-value-id={@version.id}
+                    data-confirm={"Delete the draft #{@shown.name} #{@version.version} for good?"}
+                  >
+                    <.icon name="hero-trash" /> Delete draft
                   </button>
                 </li>
               </ul>
@@ -789,30 +809,46 @@ defmodule FGDataCatalogWeb.CatalogComponents do
 
   @doc """
   Renders a version's state: "Draft" (seen by editors only), "Live"
-  (published, seen by everyone) or "Archived". A Draft's title names its
-  owning editor, if `owner` is given.
+  (published, seen by everyone) or "Archived". A Draft reads "My draft" for
+  its owning editor (`viewer_id`); its tooltip names its owner, if `owner` is
+  given.
   """
   # NOTE(Claude 2026-11-06): shown to editors only; the public catalog lists
   # Live versions only.
   # NOTE(Claude 2026-11-16): `state` replaces `status`; the class names stay
   # `status-*`.
+  # NOTE(Claude-Opus-5.5 2026-11-26): the tooltip is `data-tip`, shown at once
+  # (see `instantTips` in app.js), not a `title`, which the browser shows
+  # after a delay.
   attr :id, :string, required: true
   attr :state, :atom, required: true
   attr :owner, :any, default: nil, doc: "the owning editor (a user), if loaded"
+  attr :viewer_id, :any, default: nil, doc: "the signed-in user's id, if any"
 
   def status_badge(assigns) do
+    mine? = assigns.owner != nil and assigns.owner.id == assigns.viewer_id
+    assigns = assign(assigns, :mine?, mine?)
+
     ~H"""
-    <span id={@id} class={["status-badge", "status-#{@state}"]} title={state_title(@state, @owner)}>
-      {status_label(@state)}
+    <span
+      id={@id}
+      class={["status-badge", "status-#{@state}", @mine? && "is-mine"]}
+      data-tip={state_tip(@state, @owner, @mine?)}
+    >
+      {if(@state == :draft and @mine?, do: "My draft", else: status_label(@state))}
     </span>
     """
   end
 
-  defp state_title(:draft, %FGDataCatalog.Accounts.User{email: email}),
-    do: "Draft owned by #{email}"
+  # NOTE(Claude-Opus-5.5 2026-11-26): any editor may act on any Draft; the
+  # owner (who created, unpublished or unarchived it) is who answers for it.
+  defp state_tip(:draft, _owner, true), do: "Your draft; every editor may edit it"
 
-  defp state_title(:draft, _owner), do: "Draft without an owning editor"
-  defp state_title(_state, _owner), do: nil
+  defp state_tip(:draft, %FGDataCatalog.Accounts.User{email: email}, false),
+    do: "Draft by #{email}"
+
+  defp state_tip(:draft, _owner, _mine?), do: "Draft without an owner"
+  defp state_tip(_state, _owner, _mine?), do: nil
 
   attr :id, :string, required: true
   attr :entries, :list, required: true

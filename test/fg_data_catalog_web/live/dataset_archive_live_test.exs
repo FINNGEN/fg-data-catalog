@@ -47,7 +47,7 @@ defmodule FGDataCatalogWeb.DatasetArchiveLiveTest do
 
     {:ok, index, _html} = live(conn, ~p"/")
     assert has_element?(index, "#version-#{old.id}")
-    assert has_element?(index, "#status-#{old.id}.status-draft")
+    assert has_element?(index, "#status-#{old.id}.status-draft", "My draft")
     assert_replayable()
   end
 

@@ -1,7 +1,7 @@
 defmodule FGDataCatalogWeb.RowActionsLiveTest do
   # NOTE(Claude Opus 5.5 2026-11-19): a catalog row's actions: the status badge
   # and Edit in the row, the others (Add version, History, Publish or
-  # Unpublish, Archive) in the popover of its "…" button (`version_row/1`).
+  # Unpublish, Archive or Delete draft) in the popover of its "…" button (`version_row/1`).
   # The permission rules themselves are tested in `DatasetStatusLiveTest`;
   # here, where each action is and which ones the popover lists.
   use FGDataCatalogWeb.ConnCase, async: false
@@ -83,7 +83,8 @@ defmodule FGDataCatalogWeb.RowActionsLiveTest do
            )
   end
 
-  test "the owning editor: Publish their Draft, Unpublish the Published version",
+  # NOTE(Claude-Opus-5.5 2026-11-26): a draft is deleted, not archived.
+  test "the owning editor: Publish or Delete their draft, Unpublish the Published version",
        %{dataset: dataset, draft: draft, published: published} do
     {:ok, view, _html} = live(build_conn() |> log_in(:editor), ~p"/")
 
@@ -93,7 +94,7 @@ defmodule FGDataCatalogWeb.RowActionsLiveTest do
              "add-version-#{dataset.id}",
              "history-version-#{draft.id}",
              "publish-version-#{draft.id}",
-             "archive-version-#{draft.id}"
+             "delete-version-#{draft.id}"
            ]
 
     assert menu_actions(view, published) == [
@@ -103,17 +104,19 @@ defmodule FGDataCatalogWeb.RowActionsLiveTest do
            ]
   end
 
-  test "another editor: no Publish nor Edit for a Draft they do not own",
+  # NOTE(Claude-Opus-5.5 2026-11-26): a Draft is every editor's.
+  test "another editor: the same actions on a Draft they do not own",
        %{dataset: dataset, draft: draft, published: published} do
     {:ok, view, _html} = live(build_conn() |> log_in(:other_editor), ~p"/")
 
-    refute has_element?(view, "#edit-version-#{draft.id}")
+    assert has_element?(view, "#edit-version-#{draft.id}")
     assert has_element?(view, "#edit-version-#{published.id}")
 
     assert menu_actions(view, draft) == [
              "add-version-#{dataset.id}",
              "history-version-#{draft.id}",
-             "archive-version-#{draft.id}"
+             "publish-version-#{draft.id}",
+             "delete-version-#{draft.id}"
            ]
 
     assert menu_actions(view, published) == [
@@ -121,6 +124,11 @@ defmodule FGDataCatalogWeb.RowActionsLiveTest do
              "unpublish-version-#{published.id}",
              "archive-version-#{published.id}"
            ]
+  end
+
+  test "Delete draft asks first", %{draft: draft} do
+    {:ok, view, _html} = live(build_conn() |> log_in(:editor), ~p"/")
+    assert has_element?(view, "#delete-version-#{draft.id}[data-confirm]")
   end
 
   test "Add version only in the current row's popover",

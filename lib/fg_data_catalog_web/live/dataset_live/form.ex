@@ -4,9 +4,13 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
   an existing dataset (`/datasets/:id/versions/new`) and an existing version
   (`/versions/:id/edit`).
 
-  A new dataset is saved as a draft as it is typed, and created on Submit.
-  A new version is created on Submit. An existing version saves each valid
-  change at once.
+  NOTE(Claude-Opus-5.5 2026-11-26): an existing version saves each valid
+  change at once. A new dataset or version is created as a Draft of the user
+  (which every editor sees, see `Catalog.can?/3`) as soon as its required
+  fields are valid; the page then becomes the draft's edit page, without
+  reloading. Until then, a new dataset's fields are kept in the user's
+  autosave (see `Catalog.save_dataset_draft/2`), a new version's in the page
+  only. There is no Submit: a draft is published or deleted.
   """
   # NOTE(Claude 2026-11-04): moved out of `DatasetLive.Index`, where the forms
   # were first table rows and then a modal, to give them a page of their own.
@@ -18,8 +22,13 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
   alias FGDataCatalog.Accounts.Scope
   alias FGDataCatalog.Catalog
   alias FGDataCatalog.Changelog
+  alias FGDataCatalog.Repo
   alias FGDataCatalog.Catalog.{Dataset, DatasetVersion}
   alias FGDataCatalogWeb.DatasetLive.VersionParams
+
+  # NOTE(Claude 2026-11-17): the dataset's own fields on the edit form (those of
+  # `edit_dataset`), editable through any version.
+  @dataset_fields ~w(name description)
 
   @impl true
   def render(assigns) do
@@ -112,65 +121,52 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
           }
         </script>
 
-        <%= cond do %>
-          <% @live_action == :new -> %>
-            <h1 id="form-title">Add missing dataset</h1>
-            <.new_dataset_form
-              form={@form}
-              suggestions={@suggestions}
-              name_holder={@name_holder}
-            />
-          <% @live_action == :new_version -> %>
-            <h1 id="form-title">Add a version of {@dataset.name}</h1>
-            <p :if={@source} id="prefilled-from" class="form-note">
-              Prefilled from {@source.version}. Version, release date, data dictionary,
-              years coverage, yearly counts and individuals covered start empty; the fields
-              marked Not applicable stay so.
-            </p>
-            <.new_version_form form={@form} dataset={@dataset} suggestions={@suggestions} />
-          <% true -> %>
-            <h1 id="form-title">Edit {proposed_name(@edit)} {@edit.version.version}</h1>
-            <%!-- NOTE(Claude 2026-11-16): the version's state, and Publish for its
-                 owning editor while it is a Draft (see `Catalog.can?/3`). --%>
-            <div id="edit-state" class="form-note edit-state">
-              <.status_badge
-                id={"status-#{@edit.version.id}"}
-                state={@edit.version.state}
-                owner={@edit.version.owning_editor}
-              />
-              <span :if={@edit.version.state == :draft}>
-                Only its owning editor may edit and publish a Draft; other editors see it.
-              </span>
-              <button
-                :if={Catalog.can?(@current_scope, :publish, @edit.version)}
-                type="button"
-                id="edit-publish"
-                class="link-button"
-                phx-click="publish"
-              >
-                Publish
-              </button>
-            </div>
-            <%!-- NOTE(Claude 2026-11-06): someone else changed this row while it
-                 was being edited. --%>
-            <div :if={@edit.notice} id="edit-notice" class="form-note edit-notice" role="alert">
-              <p :if={@edit.notice.updated != []} id="edit-notice-updated">
-                Someone else changed {field_list(@edit.notice.updated)}; the form shows their values.
-              </p>
-              <p :if={@edit.notice.conflicts != []} id="edit-notice-conflicts">
-                Someone else also changed {field_list(@edit.notice.conflicts)}, which you
-                are editing: your values are kept in the form, and your next change saves
-                them over theirs.
-              </p>
-            </div>
-            <.edit_version_form
-              dataset_form={@edit.dataset_form}
-              version_form={@edit.version_form}
-              status={@edit.status}
-              saved={MapSet.to_list(@edit.saved)}
-              suggestions={@suggestions}
-            />
-        <% end %>
+        <h1 id="form-title">{form_title(@live_action, @edit)}</h1>
+        <p :if={@edit.pending == :version && @source} id="prefilled-from" class="form-note">
+          Prefilled from {@source.version}. Version, release date, data dictionary,
+          years coverage, yearly counts and individuals covered start empty; the fields
+          marked Not applicable stay so.
+        </p>
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the version's state and who may
+             act on it (see `Catalog.can?/3`); its actions are in the form's
+             footer. --%>
+        <div :if={@edit.version} id="edit-state" class="form-note edit-state">
+          <.status_badge
+            id={"status-#{@edit.version.id}"}
+            state={@edit.version.state}
+            owner={@edit.version.owning_editor}
+            viewer_id={Scope.user_id(@current_scope)}
+          />
+          <span :if={@edit.version.state == :draft}>
+            Every editor sees this draft and may edit, publish or delete it.
+          </span>
+        </div>
+        <%!-- NOTE(Claude 2026-11-06): someone else changed this row while it
+             was being edited. --%>
+        <div :if={@edit.notice} id="edit-notice" class="form-note edit-notice" role="alert">
+          <p :if={@edit.notice.updated != []} id="edit-notice-updated">
+            Someone else changed {field_list(@edit.notice.updated)}; the form shows their values.
+          </p>
+          <p :if={@edit.notice.conflicts != []} id="edit-notice-conflicts">
+            Someone else also changed {field_list(@edit.notice.conflicts)}, which you
+            are editing: your values are kept in the form, and your next change saves
+            them over theirs.
+          </p>
+        </div>
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the same form on the three
+             pages, rendered at the same place, so that a new dataset or
+             version keeps its fields (and the focus) once its draft exists. --%>
+        <.edit_version_form
+          dataset_form={@edit.dataset_form}
+          version_form={@edit.version_form}
+          status={@edit.status}
+          saved={MapSet.to_list(@edit.saved)}
+          suggestions={@suggestions}
+          pending={@edit.pending}
+          state={@edit.version && @edit.version.state}
+          can={actions(@current_scope, @edit.version)}
+          name_holder={@edit.name_holder}
+        />
       </div>
     </Layouts.app>
     """
@@ -198,70 +194,148 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
     end
   end
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): everything is set up by `mount/3`; the
+  # only patch is a new draft's, to its edit page, whose assigns `created/5`
+  # has already set.
+  @impl true
+  def handle_params(_params, _uri, socket), do: {:noreply, socket}
+
   defp mount_action(socket, :new, _params) do
     # NOTE(Claude 2026-11-03): an unsaved new dataset from an earlier visit is
     # shown again, as it was left.
-    draft = Catalog.get_dataset_draft_params(user_id(socket))
+    params = socket |> user_id() |> Catalog.get_dataset_draft_params() |> upgrade_autosave()
+
+    edit =
+      %{new_edit(:dataset, %Dataset{}, params) | params: params}
+      |> track_all_touched(params)
 
     socket
     |> assign(:page_title, "Add missing dataset")
-    |> assign(:form, build_new_form(draft || %{}))
-    |> assign_name_holder(draft || %{})
+    |> assign(:edit, edit)
+    |> assign_name_holder()
   end
 
-  # NOTE(Claude 2026-11-06): prefilled from the dataset's latest version; nothing
-  # is saved until Submit.
+  # NOTE(Claude 2026-11-06): prefilled from the dataset's latest version.
+  # NOTE(Claude-Opus-5.5 2026-11-26): its draft is created once Version and
+  # Release date are valid (they start empty), so not on opening the page.
   defp mount_action(socket, :new_version, %{"id" => id}) do
     with {id, ""} <- Integer.parse(id),
          {dataset, source} <-
            Catalog.get_dataset_for_new_version(id, viewer(socket)) do
-      params = Catalog.new_version_params(source)
+      params = %{"edit_version" => Catalog.new_version_params(source)}
 
       socket
       |> assign(:page_title, "Add a version of #{dataset.name}")
-      |> assign(:dataset, dataset)
       |> assign(:source, source)
-      |> assign(:form, to_form(new_version_changeset(dataset, params), as: "version"))
+      |> assign(:edit, new_edit(:version, dataset, params))
     else
       _ -> leave(socket, "That dataset was not found.")
     end
   end
 
   # NOTE(Claude 2026-11-16): only a version the viewer may write (see
-  # `Catalog.can?/3`): not a Draft owned by someone else.
+  # `Catalog.can?/3`): not someone else's My draft.
   defp mount_action(socket, :edit, %{"id" => id}) do
     with {dataset, version, _current} <- find_row(visible_datasets(socket), id),
          true <- Catalog.can?(socket.assigns.current_scope, :write, version) do
-      edit = %{
-        dataset: dataset,
-        version: version,
-        status: :idle,
-        dataset_form:
-          to_form(Catalog.change_dataset(Catalog.proposed_dataset(dataset, version)),
-            as: "edit_dataset"
-          ),
-        version_form: to_form(Catalog.change_dataset_version(version), as: "edit_version"),
-        # NOTE(Claude 2026-11-06): the columns changed in this form since it
-        # was opened, the latest form params, and the notice about changes
-        # made by someone else (see `handle_info/2`).
-        touched: MapSet.new(),
-        params: %{},
-        notice: nil,
-        # NOTE(Claude 2026-11-12): the columns changed in this form whose
-        # value is saved, marked with a tick (see `track_saved/2`).
-        saved: MapSet.new()
-      }
-
       # NOTE(Claude 2026-11-06): to follow other people's changes to the row.
       if connected?(socket), do: Changelog.subscribe()
 
       socket
       |> assign(:page_title, "Edit #{dataset.name} #{version.version}")
-      |> assign(:edit, edit)
+      |> assign(:edit, existing_edit(dataset, version))
     else
       nil -> leave(socket, "That dataset version was not found.")
       false -> leave(socket, "You cannot edit that version.")
     end
+  end
+
+  defp existing_edit(dataset, version) do
+    %{
+      pending: nil,
+      name_holder: nil,
+      # NOTE(Claude-Opus-5.5 2026-11-26): the params a new dataset or version
+      # opened with (autosave or prefill), see `with_prefill/2`.
+      prefill: %{},
+      dataset: dataset,
+      version: version,
+      status: :idle,
+      dataset_form:
+        to_form(Catalog.change_dataset(Catalog.proposed_dataset(dataset, version)),
+          as: "edit_dataset"
+        ),
+      version_form: to_form(Catalog.change_dataset_version(version), as: "edit_version"),
+      # NOTE(Claude 2026-11-06): the columns changed in this form since it
+      # was opened, the latest form params, and the notice about changes
+      # made by someone else (see `handle_info/2`).
+      touched: MapSet.new(),
+      params: %{},
+      notice: nil,
+      # NOTE(Claude 2026-11-12): the columns changed in this form whose
+      # value is saved, marked with a tick (see `track_saved/2`).
+      saved: MapSet.new()
+    }
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): a new dataset (`:dataset`, `dataset` is
+  # then a blank one) or a new version of `dataset` (`:version`), whose draft
+  # does not exist yet: `version` is `nil`. `params` are the form params
+  # (`edit_dataset`, `edit_version`).
+  defp new_edit(pending, dataset, params) do
+    {dataset_changeset, version_changeset} = new_changesets(dataset, params)
+    action = if pending == :dataset and params != %{}, do: :validate
+
+    %{
+      existing_edit(dataset, %DatasetVersion{})
+      | pending: pending,
+        prefill: params,
+        version: nil,
+        dataset_form: to_form(dataset_changeset, as: "edit_dataset", action: action),
+        version_form: to_form(version_changeset, as: "edit_version", action: action)
+    }
+  end
+
+  defp new_changesets(dataset, params) do
+    {Catalog.change_dataset(dataset, Map.get(params, "edit_dataset", %{})),
+     Catalog.change_dataset_version(
+       %DatasetVersion{dataset_id: dataset.id},
+       split_version_lists(Map.get(params, "edit_version", %{}))
+     )}
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): the autosave of a new dataset, in the
+  # params of this form. It is stored with those of the former new dataset
+  # form (see `save_draft/2`): the dataset's fields and `versions`, with one
+  # version.
+  defp upgrade_autosave(nil), do: %{}
+  defp upgrade_autosave(%{"edit_version" => _} = params), do: params
+  defp upgrade_autosave(%{"edit_dataset" => _} = params), do: params
+
+  defp upgrade_autosave(params) do
+    %{
+      "edit_dataset" => Map.take(params, ["name", "description"]),
+      "edit_version" => get_in(params, ["versions", "0"]) || %{}
+    }
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): until the draft exists, the optional
+  # fields are disabled (see `version_fields/1`), and a browser does not send
+  # disabled fields: their values are those the page opened with (the
+  # autosave, or the prefill of a new version), under the fields sent.
+  defp with_prefill(params, prefill) do
+    Enum.reduce(["edit_dataset", "edit_version"], params, fn key, params ->
+      merged = Map.merge(Map.get(prefill, key, %{}), Map.get(params, key, %{}))
+      if merged == %{}, do: params, else: Map.put(params, key, merged)
+    end)
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): the restored fields count as changed, to
+  # be marked as saved once the draft exists.
+  defp track_all_touched(edit, params) do
+    dataset = params |> Map.get("edit_dataset", %{}) |> Map.keys()
+    version = params |> Map.get("edit_version", %{}) |> Map.keys() |> Enum.map(&param_column/1)
+    columns = Enum.filter(dataset, &(&1 in @dataset_fields)) ++ version
+    %{edit | touched: MapSet.union(edit.touched, MapSet.new(columns))}
   end
 
   defp leave(socket, message) do
@@ -269,10 +343,12 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
   end
 
   @impl true
+  # NOTE(Claude-Opus-5.5 2026-11-26): an existing version, whatever the page
+  # was opened as (`pending` is `nil` once a new draft is created).
   def handle_event(
         "validate",
         %{"edit_version" => _} = params,
-        %{assigns: %{live_action: :edit}} = socket
+        %{assigns: %{edit: %{pending: nil}}} = socket
       ) do
     socket =
       socket
@@ -283,72 +359,51 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
     {:noreply, socket}
   end
 
-  def handle_event("validate", %{"dataset" => params}, %{assigns: %{live_action: :new}} = socket) do
-    save_draft(socket, params)
-
-    {:noreply,
-     socket
-     |> assign(:form, to_form(new_dataset_changeset(params), action: :validate))
-     |> assign_name_holder(params)}
-  end
-
-  def handle_event("save", %{"dataset" => params}, %{assigns: %{live_action: :new}} = socket) do
-    # NOTE(Claude 2026-11-16): every new dataset is a Draft owned by its creator.
-    case Catalog.create_dataset_with_version(with_version(params) |> split_lists(),
-           actor: actor(socket),
-           state: :draft,
-           owning_editor_id: user_id(socket)
-         ) do
-      {:ok, dataset} ->
-        :ok = Catalog.delete_dataset_draft(user_id(socket))
-
-        {:noreply,
-         socket
-         |> put_flash(:info, added_message(dataset.name))
-         |> push_navigate(to: ~p"/")}
-
-      {:error, changeset} ->
-        save_draft(socket, params)
-        {:noreply, socket |> assign(:form, to_form(changeset)) |> assign_name_holder(params)}
-    end
-  end
-
+  # NOTE(Claude-Opus-5.5 2026-11-26): a new dataset or version: its draft is
+  # created as soon as the form is valid, and the page becomes its edit page.
   def handle_event(
         "validate",
-        %{"version" => params},
-        %{assigns: %{live_action: :new_version}} = socket
-      ) do
-    changeset = new_version_changeset(socket.assigns.dataset, split_version_lists(params))
-    {:noreply, assign(socket, :form, to_form(changeset, as: "version", action: :validate))}
-  end
+        params,
+        %{assigns: %{edit: edit}} = socket
+      )
+      when edit.pending != nil do
+    params =
+      params
+      |> Map.take(["edit_dataset", "edit_version", "_target"])
+      |> with_prefill(edit.prefill)
 
-  def handle_event(
-        "save",
-        %{"version" => params},
-        %{assigns: %{live_action: :new_version}} = socket
-      ) do
-    %{dataset: dataset} = socket.assigns
+    edit = track_touched(edit, params)
+    {dataset_changeset, version_changeset} = new_changesets(edit.dataset, params)
 
-    # NOTE(Claude 2026-11-16): every new version is a Draft owned by its creator.
-    case Catalog.create_dataset_version(dataset, split_version_lists(params),
-           actor: actor(socket),
-           state: :draft,
-           owning_editor_id: user_id(socket)
-         ) do
-      {:ok, version} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, added_message("#{dataset.name} #{version.version}"))
-         |> push_navigate(to: ~p"/")}
+    result =
+      if dataset_changeset.valid? and version_changeset.valid?,
+        do: create_draft(socket, edit, params),
+        else: {:error, dataset_changeset, version_changeset}
 
-      {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset, as: "version"))}
+    case result do
+      {:ok, dataset, version, dataset_error} ->
+        {:noreply, created(socket, edit, dataset, version, dataset_error)}
+
+      {:error, dataset_changeset, version_changeset} ->
+        if edit.pending == :dataset, do: save_draft(socket, params)
+
+        edit = %{
+          edit
+          | dataset_form: to_form(dataset_changeset, as: "edit_dataset", action: :validate),
+            version_form: to_form(version_changeset, as: "edit_version", action: :validate)
+        }
+
+        {:noreply, socket |> assign(:edit, edit) |> assign_name_holder()}
     end
   end
 
-  # NOTE(Claude 2026-11-16): publishes the edited Draft, checked by
+  # NOTE(Claude 2026-11-16): publishes the edited draft, checked by
   # `Catalog.publish_dataset_version/2`.
-  def handle_event("publish", _params, %{assigns: %{live_action: :edit}} = socket) do
+  def handle_event(
+        "publish",
+        _params,
+        %{assigns: %{edit: %{version: %DatasetVersion{}}}} = socket
+      ) do
     %{edit: edit} = socket.assigns
     name = "#{proposed_name(edit)} #{edit.version.version}"
 
@@ -361,15 +416,30 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
     end
   end
 
-  def handle_event("discard", _params, %{assigns: %{live_action: :new}} = socket) do
-    :ok = Catalog.delete_dataset_draft(user_id(socket))
+  # NOTE(Claude-Opus-5.5 2026-11-26): a draft is deleted for good (see
+  # `Catalog.delete_draft_version/2`); before it exists, what was typed is.
+  def handle_event("delete_draft", _params, %{assigns: %{edit: %{version: nil} = edit}} = socket) do
+    if edit.pending == :dataset, do: :ok = Catalog.delete_dataset_draft(user_id(socket))
     {:noreply, push_navigate(socket, to: ~p"/")}
+  end
+
+  def handle_event("delete_draft", _params, %{assigns: %{edit: edit}} = socket) do
+    name = "#{proposed_name(edit)} #{edit.version.version}"
+
+    case Catalog.delete_draft_version(socket.assigns.current_scope, edit.version) do
+      {:ok, _version} ->
+        {:noreply,
+         socket |> put_flash(:info, "Deleted the draft #{name}.") |> push_navigate(to: ~p"/")}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "You cannot delete #{name}.")}
+    end
   end
 
   # NOTE(Claude 2026-11-04): a form event that does not match this page's form,
   # e.g. one sent from a stale page. Nothing to do.
   def handle_event(event, _params, socket)
-      when event in ["validate", "save", "discard", "publish"] do
+      when event in ["validate", "publish", "delete_draft"] do
     {:noreply, socket}
   end
 
@@ -412,10 +482,6 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
   end
 
   def handle_info({:catalog_changed, _set_id}, socket), do: {:noreply, socket}
-
-  # NOTE(Claude 2026-11-17): the dataset's own fields on the edit form (those of
-  # `edit_dataset`), editable through any version.
-  @dataset_fields ~w(name description)
 
   # NOTE(Claude 2026-11-06): the stored columns that differ, as strings.
   @ignored_columns [:id, :inserted_at, :updated_at, :dataset_id, :owning_editor]
@@ -629,16 +695,117 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
 
   # NOTE(Claude 2026-11-06): the dataset already holding the typed name, if
   # any, so the form can say why the name is taken and what to do instead.
-  defp assign_name_holder(socket, params) do
-    holder =
-      Catalog.dataset_name_holder(params["name"], viewer(socket))
-
-    assign(socket, :name_holder, holder)
+  # NOTE(Claude-Opus-5.5 2026-11-26): on the new dataset page only.
+  defp assign_name_holder(%{assigns: %{edit: %{pending: :dataset} = edit}} = socket) do
+    name = get_in(edit.params, ["edit_dataset", "name"])
+    holder = Catalog.dataset_name_holder(name, viewer(socket))
+    assign(socket, :edit, %{edit | name_holder: holder})
   end
 
-  # NOTE(Claude 2026-11-16): every new dataset or version is a Draft.
-  defp added_message(name),
-    do: "Added #{name} as a Draft: publish it from the catalog when it is ready."
+  defp assign_name_holder(socket), do: socket
+
+  defp form_title(:new, %{pending: :dataset}), do: "Add missing dataset"
+
+  defp form_title(:new_version, %{pending: :version, dataset: dataset}),
+    do: "Add a version of #{dataset.name}"
+
+  defp form_title(_action, edit), do: "Edit #{proposed_name(edit)} #{edit.version.version}"
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): the footer's actions the viewer may do
+  # with the edited version (none before it exists).
+  defp actions(_scope, nil), do: %{}
+
+  defp actions(scope, version),
+    do: Map.new([:publish, :delete], &{&1, Catalog.can?(scope, &1, version)})
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): creates the draft of a new dataset or
+  # version from valid `params`, as a Draft owned by the viewer. For a new version,
+  # the dataset's name and description, if changed, are then saved through it
+  # (see `Catalog.update_dataset_row/5`), as on the edit page; if that fails
+  # (e.g. the name is taken), the draft exists anyway and the error is shown.
+  # Returns `{:ok, dataset, version, dataset_error}` (`dataset_error` a
+  # changeset or `nil`) or `{:error, dataset_changeset, version_changeset}`.
+  defp create_draft(socket, %{pending: :dataset} = edit, params) do
+    attrs =
+      params
+      |> Map.get("edit_dataset", %{})
+      |> Map.put("versions", %{"0" => split_version_lists(params["edit_version"])})
+
+    case Catalog.create_dataset_with_version(attrs,
+           actor: actor(socket),
+           owning_editor_id: user_id(socket)
+         ) do
+      {:ok, %Dataset{versions: [version]} = dataset} ->
+        :ok = Catalog.delete_dataset_draft(user_id(socket))
+        {:ok, dataset, version, nil}
+
+      {:error, changeset} ->
+        {_dataset, version_changeset} = new_changesets(edit.dataset, params)
+        {:error, changeset, version_changeset}
+    end
+  end
+
+  defp create_draft(socket, %{pending: :version, dataset: dataset}, params) do
+    dataset_params = Map.get(params, "edit_dataset", %{})
+    version_params = split_version_lists(params["edit_version"])
+
+    case Catalog.create_dataset_version(dataset, version_params,
+           actor: actor(socket),
+           owning_editor_id: user_id(socket)
+         ) do
+      {:ok, version} ->
+        if dataset_changed?(dataset, dataset_params) do
+          case Catalog.update_dataset_row(dataset, dataset_params, version, %{},
+                 scope: socket.assigns.current_scope
+               ) do
+            {:ok, %{dataset: dataset, version: version}} -> {:ok, dataset, version, nil}
+            {:error, %Ecto.Changeset{} = changeset} -> {:ok, dataset, version, changeset}
+          end
+        else
+          {:ok, dataset, version, nil}
+        end
+
+      {:error, changeset} ->
+        {dataset_changeset, _version} = new_changesets(dataset, params)
+        {:error, dataset_changeset, changeset}
+    end
+  end
+
+  defp dataset_changed?(dataset, params) do
+    Catalog.change_dataset(dataset, Map.take(params, @dataset_fields)).changes != %{}
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): the page becomes the new draft's edit
+  # page: same LiveView and form, so the fields and the focus stay; the URL
+  # changes with a patch.
+  defp created(socket, edit, dataset, version, dataset_error) do
+    version = Repo.preload(version, :owning_editor, force: true)
+    if connected?(socket), do: Changelog.subscribe()
+
+    new = existing_edit(dataset, version)
+
+    dataset_form =
+      if dataset_error,
+        do: to_form(dataset_error, as: "edit_dataset", action: :validate),
+        else: new.dataset_form
+
+    saved =
+      if dataset_error,
+        do: MapSet.difference(edit.touched, MapSet.new(@dataset_fields)),
+        else: edit.touched
+
+    socket
+    |> assign(:edit, %{
+      new
+      | touched: edit.touched,
+        params: edit.params,
+        saved: saved,
+        status: if(dataset_error, do: :invalid, else: :saved),
+        dataset_form: dataset_form
+    })
+    |> assign(:page_title, "Edit #{dataset.name} #{version.version}")
+    |> push_patch(to: ~p"/versions/#{version.id}/edit", replace: true)
+  end
 
   # NOTE(Claude 2026-11-16): the versions this viewer may see (see
   # `Catalog.list_datasets/1`): Published ones, and every Draft for editors.
@@ -661,31 +828,20 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
     end
   end
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): the form params of a new dataset, kept
+  # for its user until its draft is created. Stored in the former form's shape
+  # (the dataset's fields and `versions`, with one version; see
+  # `upgrade_autosave/1`), which the releases before 2026-11-26 read too, so
+  # that a rollback keeps them.
   defp save_draft(socket, params) do
-    if user_id = user_id(socket), do: {:ok, _} = Catalog.save_dataset_draft(user_id, params)
+    stored =
+      params
+      |> Map.get("edit_dataset", %{})
+      |> Map.take(@dataset_fields)
+      |> Map.put("versions", %{"0" => Map.get(params, "edit_version", %{})})
+
+    if user_id = user_id(socket), do: {:ok, _} = Catalog.save_dataset_draft(user_id, stored)
   end
-
-  # NOTE(Claude 2026-11-03): without an action, a restored draft shows no errors
-  # until the user edits it again.
-  defp build_new_form(params), do: params |> new_dataset_changeset() |> to_form()
-
-  defp new_version_changeset(dataset, params) do
-    Catalog.change_dataset_version(%DatasetVersion{dataset_id: dataset.id}, params)
-  end
-
-  defp new_dataset_changeset(params) do
-    Catalog.change_new_dataset(%Dataset{}, params |> with_version() |> split_lists())
-  end
-
-  # NOTE(Claude 2026-11-04): always one version, otherwise its fields (rendered
-  # by `inputs_for` over the versions) would vanish.
-  defp with_version(params), do: Map.put_new(params, "versions", %{"0" => %{}})
-
-  defp split_lists(%{"versions" => versions} = params) when is_map(versions) do
-    %{params | "versions" => Map.new(versions, fn {key, v} -> {key, split_version_lists(v)} end)}
-  end
-
-  defp split_lists(params), do: params
 
   # NOTE(Claude 2026-11-10): shared with the catalog's quick edit.
   defp split_version_lists(version), do: VersionParams.split_lists(version)

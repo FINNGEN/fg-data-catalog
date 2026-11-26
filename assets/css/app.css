@@ -497,13 +497,17 @@ button,
 }
 
 button:hover:not(:disabled),
-.btn:hover {
+/* NOTE(Claude-Opus-5.5 2026-11-26): not on a disabled button, which keeps
+ * its look (e.g. Publish before the draft exists). */
+.btn:hover:not(:disabled) {
   background: var(--color-hover);
 }
 
+/* NOTE(Claude-Opus-5.5 2026-11-26): `not-allowed`: the action exists, but
+ * not yet (e.g. Publish before the draft exists). */
 button:disabled {
   color: var(--color-muted);
-  cursor: default;
+  cursor: not-allowed;
   opacity: 0.6;
 }
 
@@ -2031,7 +2035,12 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  padding: 0.75rem 0;
+  /* NOTE(Claude-Opus-5.5 2026-11-26): the bar overhangs the fields by 1.5rem
+   * on each side (the page's padding), so that its rule does not look like
+   * the edge of a cut field group, and its background hides the saved ticks
+   * scrolling under it. */
+  margin-inline: -1.5rem;
+  padding: 0.75rem 1.5rem;
   background: var(--color-page);
   border-top: 1px solid var(--color-rule);
 }
@@ -2042,15 +2051,23 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   scroll-margin-bottom: 5rem;
 }
 
-/* NOTE(Claude 2026-11-12): the side column overhangs the centered 44rem page
- * by 14rem on the right; from this width on, it fits in the window (with a
- * scrollbar). */
-@media (min-width: 74rem) {
+/* NOTE(Claude-Opus-5.5 2026-11-26): a fieldset that only locks the optional
+ * fields until the draft exists (see `version_fields/1`): no box of its own,
+ * its children laid out as the form's. */
+.field-lock {
+  display: contents;
+}
+
+/* NOTE(Claude-Opus-5.5 2026-11-26): the side column overhangs the centered
+ * 44rem page by 19rem on the right (17rem, wide enough for a draft's status
+ * on one line, and for Publish and Share with editors side by side, plus the
+ * 2rem gap); from this width on, it fits in the window (with a scrollbar). */
+@media (min-width: 84rem) {
   /* NOTE(Claude 2026-11-12): the form pages only, not the catalog's quick
    * edit modal, which is a `.dataset-form` too. */
   .form-page .dataset-form {
     display: grid;
-    grid-template-columns: 100% 12rem;
+    grid-template-columns: 100% 17rem;
     column-gap: 2rem;
   }
 
@@ -2062,9 +2079,10 @@ label:has(> :is(.input, .select, .textarea):disabled) {
     align-self: end;
     bottom: 1rem;
     flex-direction: column;
-    align-items: start;
+    align-items: stretch;
     justify-content: start;
     gap: 0.75rem;
+    margin-inline: 0;
     padding: 0;
     background: none;
     border-top: 0;
@@ -2185,6 +2203,14 @@ label:has(> :is(.input, .select, .textarea):disabled) {
 
 .form-footer .form-actions {
   margin-top: 0;
+  /* NOTE(Claude-Opus-5.5 2026-11-26): a draft's three buttons (Publish,
+   * Share with editors, Delete draft) go to the next line, whole, when the
+   * footer is narrow (beside the fields). */
+  flex-wrap: wrap;
+}
+
+.form-footer .form-actions :is(.btn, .link-button) {
+  white-space: nowrap;
 }
 
 /* NOTE(Claude 2026-11-04): autocomplete dropdown of the dataset forms. */

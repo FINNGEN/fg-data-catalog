@@ -477,3 +477,16 @@ Decided and done 2026-11-16. Replaces the admin / editor split and the `status` 
 
 - [x] Environments field: use same suggestion behavior as Tags.
   - The dataset add/edit page suggests the environments in use while typing, as Tags, Modality and Format do (the catalog quick edit already did). Still free text.
+
+## Drafts: no Submit, My draft, Delete draft (2026-11-26)
+
+- [x] When adding a new dataset, it's unclear what the Submit and Discard buttons do; a "My draft" badge; the Add version page saving nothing until Submit.
+  - [x] One Draft state, as before, seen by every editor (never by visitors); any editor may edit, publish and delete any Draft (`Catalog.can?/3`). Its badge reads "My draft" for its owner (who created, unpublished or unarchived it), "Draft" for the others; its tooltip, shown at once (`data-tip`, see `instantTips` in app.js), names the owner ("Draft by …") or says "Your draft; every editor may edit it".
+    - Tried and dropped the same day: a private "My draft" state with a "Share with editors" action to a shared draft (too complex), then private drafts only (orphaned drafts, invisible collisions, Unpublish hiding versions from editors).
+  - [x] Delete draft: removes the draft version for good (and its dataset if it has no other version, archived ones included), recorded in the changelog and revertable (`Catalog.delete_draft_version/2`). Replaces Archive on drafts, in the row's "…" menu and on the edit page, where it is a link-styled button.
+  - [x] New dataset and Add version pages: no Submit / Discard. The draft is created once Dataset, Version and Release date are valid; the URL becomes `/versions/:id/edit` without leaving the page (same form, `edit_version_form/1`, so the focused field keeps the focus, checked in a browser), and each change is saved as on the edit page, with Publish and Delete draft. Before then, Publish is disabled and Delete draft forgets what was typed. Add version creates the draft on the first valid change, not when the page opens.
+    - Until then, the optional fields are locked (disabled fieldsets, with a note), on both pages: only the required fields can be typed, so nothing else can be lost by leaving the page. A browser does not send disabled fields, so their values (a new version's prefill, a restored autosave) are merged back under the fields sent (`with_prefill/2`).
+    - A new dataset's required fields are kept in the user's autosave until then, stored in the former form's shape (`name`, `description`, `versions`), so that a rollback to an earlier release still reads them. An older autosave with optional values shows them, locked, and keeps them in the draft.
+    - The Add version page now also shows the dataset's name and description, as the edit page does: a name changed before the draft exists is saved through it once it is created (proposed, if the dataset has a Live version).
+  - [x] No migration: the states are those of 2026-11-16 (Draft, Published, Archived).
+  - [x] Side column of the form pages 17rem wide (from 84rem windows), so that the status fits on one line and Publish sits next to the other actions; the bottom bar's rule overhangs the fields; a disabled button keeps its look on hover, with a `not-allowed` cursor.

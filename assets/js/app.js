@@ -41,6 +41,35 @@ const localizeDates = root => {
 }
 localizeDates(document)
 
+// NOTE(Claude-Opus-5.5 2026-11-26): an element's `data-tip` shows at once on
+// hover, unlike a `title`, which the browser shows after a delay; looks like
+// the sparklines' tooltip (`.SparkTip`). One tooltip on the body, fixed, so
+// that no scroll box clips it, and out of LiveView's reach.
+const instantTips = () => {
+  const tip = document.createElement("div")
+  tip.className = "spark-tip instant-tip"
+  tip.setAttribute("aria-hidden", "true")
+  tip.hidden = true
+  document.body.appendChild(tip)
+  let shownFor = null
+  const hide = () => { tip.hidden = true; shownFor = null }
+  document.addEventListener("mouseover", e => {
+    const el = e.target.closest && e.target.closest("[data-tip]")
+    if (!el || !el.dataset.tip) return hide()
+    if (el === shownFor) return
+    const box = el.getBoundingClientRect()
+    tip.textContent = el.dataset.tip
+    tip.style.left = `${box.left}px`
+    tip.style.top = `${box.top}px`
+    tip.hidden = false
+    shownFor = el
+  })
+  document.addEventListener("mouseleave", hide)
+  window.addEventListener("scroll", hide, {capture: true, passive: true})
+  window.addEventListener("phx:page-loading-start", hide)
+}
+instantTips()
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,

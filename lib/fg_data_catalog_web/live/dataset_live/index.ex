@@ -489,7 +489,8 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
             this.popovers.destroyed()
           },
 
-          // After Publish, Unpublish or Archive (`row_action`, sent once the
+          // NOTE(Claude-Opus-5.5 2026-11-26): after Publish, Unpublish,
+          // Archive or Delete draft (`row_action`, sent once the
           // result is rendered): a failure leaves the popover open, to retry, if
           // its button is still shown. Otherwise the popover is closed and the
           // focus goes to the row's button, or to the table if it is gone.
@@ -1027,6 +1028,11 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
 
   def handle_event("unpublish", %{"id" => id}, socket) do
     transition(socket, id, &Catalog.unpublish_dataset_version/2, "unpublish")
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): a Draft deleted for good.
+  def handle_event("delete", %{"id" => id}, socket) do
+    transition(socket, id, &Catalog.delete_draft_version/2, "delete")
   end
 
   # NOTE(Claude 2026-11-10): OMOP-mapped is not edited but cycled, saved at

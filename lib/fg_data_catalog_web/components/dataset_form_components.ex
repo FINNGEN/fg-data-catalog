@@ -1,9 +1,9 @@
 defmodule FGDataCatalogWeb.DatasetFormComponents do
   @moduledoc """
-  The dataset forms, each shown on a page of its own (see
-  `FGDataCatalogWeb.DatasetLive.Form`): the "new dataset" form and the form of
-  an existing version being edited. Fields are laid out vertically, in the
-  order of the catalog columns.
+  The dataset form, shown on a page of its own (see
+  `FGDataCatalogWeb.DatasetLive.Form`): a new dataset, a new version or an
+  existing version. Fields are laid out vertically, in the order of the
+  catalog columns.
   """
   use FGDataCatalogWeb, :html
 
@@ -12,65 +12,6 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
   # NOTE(Claude 2026-11-03): typing pauses this long (ms) before a change is
   # sent, and so autosaved. Leaving a field sends it at once.
   @debounce "300"
-
-  @doc """
-  Renders the form for a new dataset and its first version.
-  """
-  attr :form, Phoenix.HTML.Form, required: true
-  attr :suggestions, :map, default: %{}
-
-  attr :name_holder, :any,
-    default: nil,
-    doc: "the dataset holding the typed name, see `Catalog.dataset_name_holder/2`"
-
-  def new_dataset_form(assigns) do
-    assigns = assign(assigns, :debounce, @debounce)
-
-    ~H"""
-    <.form
-      for={@form}
-      id="dataset-form"
-      class="dataset-form"
-      phx-change="validate"
-      phx-submit="save"
-    >
-      <div class="form-fields">
-        <.required_note id="dataset-form-required-note" />
-        <.input
-          field={@form[:name]}
-          type="text"
-          label="Dataset"
-          phx-debounce={@debounce}
-          mark_required
-          autofocus
-        />
-        <.name_holder_note :if={@name_holder} holder={@name_holder} />
-        <.description_input field={@form[:description]} debounce={@debounce} />
-        <.inputs_for :let={v} field={@form[:versions]}>
-          <.version_fields form={v} debounce={@debounce} suggestions={@suggestions} />
-        </.inputs_for>
-      </div>
-      <%!-- NOTE(Claude 2026-11-12): the status and buttons stay in view (see
-           `.form-footer`), next to the fields on a wide screen. --%>
-      <div id="dataset-form-footer" class="form-footer">
-        <p class="draft-status">Changes are saved as a draft as you type.</p>
-        <div class="form-actions">
-          <.button id="submit-dataset" variant="primary" phx-disable-with="Submitting…">
-            Submit
-          </.button>
-          <button
-            id="discard-dataset"
-            type="button"
-            phx-click="discard"
-            data-confirm="Discard this new dataset?"
-          >
-            Discard
-          </button>
-        </div>
-      </div>
-    </.form>
-    """
-  end
 
   # NOTE(Claude 2026-11-06): why the typed name is taken, and what to do
   # instead: add a version to the dataset that holds it, or unarchive it.
@@ -116,55 +57,18 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
   end
 
   @doc """
-  Renders the form of a new version of `dataset`, created on Submit.
-  """
-  # NOTE(Claude 2026-11-06): no autosaved draft, unlike the new dataset form.
-  attr :form, Phoenix.HTML.Form, required: true
-  attr :dataset, :map, required: true
-  attr :suggestions, :map, default: %{}
-
-  def new_version_form(assigns) do
-    assigns = assign(assigns, :debounce, @debounce)
-
-    ~H"""
-    <.form
-      for={@form}
-      id="version-form"
-      class="dataset-form"
-      phx-change="validate"
-      phx-submit="save"
-    >
-      <div class="form-fields">
-        <.required_note id="version-form-required-note" />
-        <.version_fields
-          form={@form}
-          debounce={@debounce}
-          suggestions={@suggestions}
-          autofocus_version
-        />
-      </div>
-      <%!-- NOTE(Claude 2026-11-12): the status and buttons stay in view (see
-           `.form-footer`), next to the fields on a wide screen. --%>
-      <div id="version-form-footer" class="form-footer">
-        <div class="form-actions">
-          <.button id="submit-version" variant="primary" phx-disable-with="Submitting…">
-            Submit
-          </.button>
-          <.link id="cancel-version" navigate={~p"/"}>Cancel</.link>
-        </div>
-      </div>
-    </.form>
-    """
-  end
-
-  @doc """
-  Renders the form of an existing version. Each valid change is saved at once
-  (see `FGDataCatalogWeb.DatasetLive.Form`).
+  Renders the form of a version, on the three form pages (see
+  `FGDataCatalogWeb.DatasetLive.Form`): an existing version, whose valid
+  changes are saved at once, and a new dataset or a new version, `pending`
+  until its draft is created (once its required fields are valid).
 
   NOTE(Claude 2026-11-17): the dataset's name and description are editable
   through any version, not only the current one (see
   `FGDataCatalog.Catalog.update_dataset_row/5` for where they are saved).
   """
+  # NOTE(Claude-Opus-5.5 2026-11-26): the same form, input names and ids on
+  # the three pages, so that the page of a new dataset or version becomes the
+  # draft's edit page without its fields being replaced (the focus stays).
   attr :dataset_form, Phoenix.HTML.Form, required: true
   attr :version_form, Phoenix.HTML.Form, required: true
   attr :status, :atom, values: [:idle, :saved, :invalid], required: true
@@ -175,8 +79,27 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
 
   attr :suggestions, :map, default: %{}
 
+  attr :pending, :atom,
+    values: [nil, :dataset, :version],
+    default: nil,
+    doc: "a new dataset or version whose draft is not created yet"
+
+  attr :state, :atom, default: nil, doc: "the version's state, once it exists"
+
+  attr :can, :map,
+    default: %{},
+    doc: "what the viewer may do with the version: `publish`, `delete`"
+
+  attr :name_holder, :any,
+    default: nil,
+    doc: "the dataset holding the typed name, see `Catalog.dataset_name_holder/2`"
+
   def edit_version_form(assigns) do
-    assigns = assign(assigns, :debounce, @debounce)
+    assigns =
+      assign(assigns,
+        debounce: @debounce,
+        draft?: assigns.pending != nil or assigns.state == :draft
+      )
 
     ~H"""
     <%!-- NOTE(Claude 2026-11-04): Enter submits the form, which just saves it
@@ -197,28 +120,69 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
           phx-debounce={@debounce}
           saved={"name" in @saved}
           mark_required
-          autofocus
+          autofocus={@pending != :version}
         />
-        <.description_input
-          field={@dataset_form[:description]}
-          debounce={@debounce}
-          saved={"description" in @saved}
-        />
+        <.name_holder_note :if={@name_holder} holder={@name_holder} />
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): optional, so locked with the
+             version's optional fields until the draft exists. --%>
+        <fieldset id="description-field" class="field-lock" disabled={@pending != nil}>
+          <.description_input
+            field={@dataset_form[:description]}
+            debounce={@debounce}
+            saved={"description" in @saved}
+          />
+        </fieldset>
         <.version_fields
           form={@version_form}
           debounce={@debounce}
           suggestions={@suggestions}
           saved={@saved}
+          autofocus_version={@pending == :version}
+          lock_optional={@pending != nil}
         />
       </div>
       <%!-- NOTE(Claude 2026-11-12): the status and buttons stay in view (see
            `.form-footer`), next to the fields on a wide screen. --%>
       <div id="edit-form-footer" class="form-footer">
         <p id="edit-status" class="draft-status" role="status">
-          {edit_status(@status)}
+          {edit_status(@status, @pending, @state)}
         </p>
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): a draft has no Submit: it is
+             saved as it is typed, then published or deleted. Publish waits for
+             the draft to exist. Delete draft, before then, forgets what was
+             typed. Delete draft is a link-styled button, set apart from
+             Publish. --%>
         <div class="form-actions">
-          <.button id="done-editing" variant="primary" navigate={~p"/"}>Done</.button>
+          <%= if @draft? do %>
+            <button
+              :if={@pending || @can[:publish]}
+              type="button"
+              id="edit-publish"
+              class="btn btn-primary"
+              phx-click="publish"
+              disabled={@pending != nil}
+              title={@pending && "Fill in the required fields first"}
+            >
+              Publish
+            </button>
+            <button
+              :if={@pending || @can[:delete]}
+              type="button"
+              id="edit-delete"
+              class="link-button"
+              phx-click="delete_draft"
+              data-confirm={
+                if(@pending,
+                  do: "Delete this draft? What you typed is lost.",
+                  else: "Delete this draft for good?"
+                )
+              }
+            >
+              Delete draft
+            </button>
+          <% else %>
+            <.button id="done-editing" variant="primary" navigate={~p"/"}>Done</.button>
+          <% end %>
         </div>
       </div>
     </.form>
@@ -245,9 +209,21 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
     """
   end
 
-  defp edit_status(:idle), do: "Changes are saved as you type."
-  defp edit_status(:saved), do: "Saved."
-  defp edit_status(:invalid), do: "Not saved: fix the errors in this form."
+  # NOTE(Claude-Opus-5.5 2026-11-26): what is saved, and who sees it.
+  # NOTE(Claude-Opus-5.5 2026-11-26): the other fields are locked until then.
+  defp edit_status(_status, :dataset, _state),
+    do:
+      "Fill in Dataset, Version and Release date to create your draft, " <>
+        "which editors see, and open the other fields."
+
+  defp edit_status(_status, :version, _state),
+    do:
+      "Fill in Version and Release date to create your draft, " <>
+        "which editors see, and open the other fields."
+
+  defp edit_status(:invalid, _pending, _state), do: "Not saved: fix the errors in this form."
+  defp edit_status(:saved, _pending, _state), do: "Saved."
+  defp edit_status(:idle, _pending, _state), do: "Changes are saved as you type."
 
   @doc false
   attr :form, Phoenix.HTML.Form, required: true
@@ -262,6 +238,10 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
   attr :saved, :list,
     default: [],
     doc: "the columns (as strings) marked as saved, see `edit_version_form/1`"
+
+  attr :lock_optional, :boolean,
+    default: false,
+    doc: "disables the optional fields, until the draft exists (see `edit_version_form/1`)"
 
   # NOTE(Claude 2026-11-04): the version's fields, one under the other, shared
   # by the new dataset form and the edit form. Related fields are grouped.
@@ -290,337 +270,345 @@ defmodule FGDataCatalogWeb.DatasetFormComponents do
       saved={"release_date" in @saved}
       mark_required
     />
-    <.suggest_input
-      :if={show_field?(@only, :tags)}
-      field={@form[:tags]}
-      label="Tags (comma-separated)"
-      suggestions={Map.get(@suggestions, :tags, [])}
-      debounce={@debounce}
-      saved={"tags" in @saved}
-    />
-    <script :type={Phoenix.LiveView.ColocatedHook} name=".TokenSuggest">
-      export default {
-        mounted() {
-          const input = this.el
-          const list = document.getElementById(input.dataset.list)
-          let matches = []
-          let active = -1
+    <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the optional fields, locked until
+         the draft exists (`lock_optional`): one disabled fieldset disables
+         every control in it. `.field-lock` lays it out as if absent. --%>
+    <fieldset id="optional-fields" class="field-lock" disabled={@lock_optional}>
+      <p :if={@lock_optional} id="optional-fields-note" class="form-note">
+        The other fields open once the required ones are filled in, which creates the draft.
+      </p>
+      <.suggest_input
+        :if={show_field?(@only, :tags)}
+        field={@form[:tags]}
+        label="Tags (comma-separated)"
+        suggestions={Map.get(@suggestions, :tags, [])}
+        debounce={@debounce}
+        saved={"tags" in @saved}
+      />
+      <script :type={Phoenix.LiveView.ColocatedHook} name=".TokenSuggest">
+        export default {
+          mounted() {
+            const input = this.el
+            const list = document.getElementById(input.dataset.list)
+            let matches = []
+            let active = -1
 
-          // The comma-separated token the caret is in: its bounds and text.
-          const token = () => {
-            const caret = input.selectionStart ?? input.value.length
-            const start = input.value.lastIndexOf(",", caret - 1) + 1
-            let end = input.value.indexOf(",", caret)
-            if (end === -1) end = input.value.length
-            return { start, end, text: input.value.slice(start, end).trim() }
-          }
-
-          // NOTE(Claude 2026-11-16): the list is `position: fixed`, placed from
-          // the field's box in the window, so that a scrolling ancestor (the
-          // catalog table's `.table-scroll`) does not clip it. It opens below
-          // the field, or above when there is more room there (a field near
-          // the window's or the table's bottom), and as tall as fits.
-          const field = input.closest(".suggest") || input
-          const GAP = 2
-          const MARGIN = 8
-          const place = () => {
-            if (list.hidden) return
-            const box = field.getBoundingClientRect()
-            list.style.left = `${box.left}px`
-            list.style.width = `${box.width}px`
-            list.style.maxHeight = ""
-            const below = window.innerHeight - box.bottom - GAP - MARGIN
-            const above = box.top - GAP - MARGIN
-            const height = list.scrollHeight
-            if (height <= below || below >= above) {
-              list.style.top = `${box.bottom + GAP}px`
-              list.style.bottom = ""
-              list.style.maxHeight = `${Math.max(below, 0)}px`
-            } else {
-              list.style.top = ""
-              list.style.bottom = `${window.innerHeight - box.top + GAP}px`
-              list.style.maxHeight = `${Math.max(above, 0)}px`
+            // The comma-separated token the caret is in: its bounds and text.
+            const token = () => {
+              const caret = input.selectionStart ?? input.value.length
+              const start = input.value.lastIndexOf(",", caret - 1) + 1
+              let end = input.value.indexOf(",", caret)
+              if (end === -1) end = input.value.length
+              return { start, end, text: input.value.slice(start, end).trim() }
             }
-          }
 
-          // NOTE(Claude 2026-11-16): kept in place while open when the page or
-          // the table scrolls (captured: scroll events do not bubble), or the
-          // window is resized.
-          const onMove = () => place()
-          const listen = (on) => {
-            const method = on ? "addEventListener" : "removeEventListener"
-            window[method]("scroll", onMove, true)
-            window[method]("resize", onMove)
-          }
-          this.unlisten = () => listen(false)
-
-          const close = () => { list.hidden = true; active = -1; listen(false) }
-
-          const highlight = (i) => {
-            active = i
-            Array.from(list.children).forEach((li, j) =>
-              li.setAttribute("aria-selected", String(j === i)))
-          }
-
-          const choose = (tag) => {
-            const { start, end } = token()
-            const before = input.value.slice(0, start).replace(/\s+$/, "")
-            const after = input.value.slice(end).replace(/^,?\s*/, "")
-            const head = before === "" ? "" : before + " "
-            const inserted = head + tag + ", "
-            input.value = inserted + after
-            input.setSelectionRange(inserted.length, inserted.length)
-            close()
-            input.dispatchEvent(new Event("input", { bubbles: true }))
-            input.focus()
-          }
-
-          const MAX_SUGGESTIONS = 8
-
-          const render = () => {
-            const all = JSON.parse(input.dataset.suggestions || "[]")
-            const { text } = token()
-            const used = new Set(
-              input.value.split(",").map((t) => t.trim().toLowerCase()))
-            const q = text.toLowerCase()
-            const prefix = (t) => t.toLowerCase().startsWith(q)
-            // NOTE(Claude 2026-11-04): with nothing typed yet, the first
-            // MAX_SUGGESTIONS unused values are listed (all of them match "").
-            matches = all
-              .filter((t) => t.toLowerCase().includes(q) && !used.has(t.toLowerCase()))
-              .sort((a, b) => Number(prefix(b)) - Number(prefix(a)))
-              .slice(0, MAX_SUGGESTIONS)
-            list.replaceChildren(...matches.map((tag) => {
-              const li = document.createElement("li")
-              li.setAttribute("role", "option")
-              li.textContent = tag
-              // mousedown, not click: it fires before the input loses focus.
-              li.addEventListener("mousedown", (e) => { e.preventDefault(); choose(tag) })
-              return li
-            }))
-            list.hidden = matches.length === 0
-            active = -1
-            listen(false)
-            if (!list.hidden) { place(); listen(true) }
-          }
-
-          input.addEventListener("input", render)
-          // NOTE(Claude 2026-11-04): focus lists the suggestions before anything is
-          // typed; click re-opens the list after Escape or choosing one.
-          input.addEventListener("focus", render)
-          input.addEventListener("click", render)
-          input.addEventListener("blur", close)
-          input.addEventListener("keydown", (e) => {
-            if (list.hidden) return
-            if (e.key === "ArrowDown") {
-              e.preventDefault(); highlight((active + 1) % matches.length)
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault(); highlight((active - 1 + matches.length) % matches.length)
-            } else if ((e.key === "Enter" || e.key === "Tab") && active >= 0) {
-              e.preventDefault(); choose(matches[active])
-            } else if (e.key === "Escape") {
-              e.preventDefault(); close()
+            // NOTE(Claude 2026-11-16): the list is `position: fixed`, placed from
+            // the field's box in the window, so that a scrolling ancestor (the
+            // catalog table's `.table-scroll`) does not clip it. It opens below
+            // the field, or above when there is more room there (a field near
+            // the window's or the table's bottom), and as tall as fits.
+            const field = input.closest(".suggest") || input
+            const GAP = 2
+            const MARGIN = 8
+            const place = () => {
+              if (list.hidden) return
+              const box = field.getBoundingClientRect()
+              list.style.left = `${box.left}px`
+              list.style.width = `${box.width}px`
+              list.style.maxHeight = ""
+              const below = window.innerHeight - box.bottom - GAP - MARGIN
+              const above = box.top - GAP - MARGIN
+              const height = list.scrollHeight
+              if (height <= below || below >= above) {
+                list.style.top = `${box.bottom + GAP}px`
+                list.style.bottom = ""
+                list.style.maxHeight = `${Math.max(below, 0)}px`
+              } else {
+                list.style.top = ""
+                list.style.bottom = `${window.innerHeight - box.top + GAP}px`
+                list.style.maxHeight = `${Math.max(above, 0)}px`
+              }
             }
-          })
-        },
-        destroyed() {
-          this.unlisten && this.unlisten()
+
+            // NOTE(Claude 2026-11-16): kept in place while open when the page or
+            // the table scrolls (captured: scroll events do not bubble), or the
+            // window is resized.
+            const onMove = () => place()
+            const listen = (on) => {
+              const method = on ? "addEventListener" : "removeEventListener"
+              window[method]("scroll", onMove, true)
+              window[method]("resize", onMove)
+            }
+            this.unlisten = () => listen(false)
+
+            const close = () => { list.hidden = true; active = -1; listen(false) }
+
+            const highlight = (i) => {
+              active = i
+              Array.from(list.children).forEach((li, j) =>
+                li.setAttribute("aria-selected", String(j === i)))
+            }
+
+            const choose = (tag) => {
+              const { start, end } = token()
+              const before = input.value.slice(0, start).replace(/\s+$/, "")
+              const after = input.value.slice(end).replace(/^,?\s*/, "")
+              const head = before === "" ? "" : before + " "
+              const inserted = head + tag + ", "
+              input.value = inserted + after
+              input.setSelectionRange(inserted.length, inserted.length)
+              close()
+              input.dispatchEvent(new Event("input", { bubbles: true }))
+              input.focus()
+            }
+
+            const MAX_SUGGESTIONS = 8
+
+            const render = () => {
+              const all = JSON.parse(input.dataset.suggestions || "[]")
+              const { text } = token()
+              const used = new Set(
+                input.value.split(",").map((t) => t.trim().toLowerCase()))
+              const q = text.toLowerCase()
+              const prefix = (t) => t.toLowerCase().startsWith(q)
+              // NOTE(Claude 2026-11-04): with nothing typed yet, the first
+              // MAX_SUGGESTIONS unused values are listed (all of them match "").
+              matches = all
+                .filter((t) => t.toLowerCase().includes(q) && !used.has(t.toLowerCase()))
+                .sort((a, b) => Number(prefix(b)) - Number(prefix(a)))
+                .slice(0, MAX_SUGGESTIONS)
+              list.replaceChildren(...matches.map((tag) => {
+                const li = document.createElement("li")
+                li.setAttribute("role", "option")
+                li.textContent = tag
+                // mousedown, not click: it fires before the input loses focus.
+                li.addEventListener("mousedown", (e) => { e.preventDefault(); choose(tag) })
+                return li
+              }))
+              list.hidden = matches.length === 0
+              active = -1
+              listen(false)
+              if (!list.hidden) { place(); listen(true) }
+            }
+
+            input.addEventListener("input", render)
+            // NOTE(Claude 2026-11-04): focus lists the suggestions before anything is
+            // typed; click re-opens the list after Escape or choosing one.
+            input.addEventListener("focus", render)
+            input.addEventListener("click", render)
+            input.addEventListener("blur", close)
+            input.addEventListener("keydown", (e) => {
+              if (list.hidden) return
+              if (e.key === "ArrowDown") {
+                e.preventDefault(); highlight((active + 1) % matches.length)
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault(); highlight((active - 1 + matches.length) % matches.length)
+              } else if ((e.key === "Enter" || e.key === "Tab") && active >= 0) {
+                e.preventDefault(); choose(matches[active])
+              } else if (e.key === "Escape") {
+                e.preventDefault(); close()
+              }
+            })
+          },
+          destroyed() {
+            this.unlisten && this.unlisten()
+          }
         }
-      }
-    </script>
-    <%!-- NOTE(Claude-Opus-5.5 2026-11-26): suggests the environments in use, as Tags. --%>
-    <.suggest_input
-      :if={show_field?(@only, :environments)}
-      field={@form[:environments]}
-      label="Environments (comma-separated)"
-      suggestions={Map.get(@suggestions, :environments, [])}
-      debounce={@debounce}
-      saved={"environments" in @saved}
-    />
-    <.input
-      :if={show_field?(@only, :access_type)}
-      field={@form[:access_type]}
-      type="select"
-      label="Access type"
-      prompt="Choose…"
-      options={access_type_options()}
-      saved={"access_type" in @saved}
-    />
-    <%!-- NOTE(Claude 2026-11-04): modality is what the data is, format is how it is
+      </script>
+      <%!-- NOTE(Claude-Opus-5.5 2026-11-26): suggests the environments in use, as Tags. --%>
+      <.suggest_input
+        :if={show_field?(@only, :environments)}
+        field={@form[:environments]}
+        label="Environments (comma-separated)"
+        suggestions={Map.get(@suggestions, :environments, [])}
+        debounce={@debounce}
+        saved={"environments" in @saved}
+      />
+      <.input
+        :if={show_field?(@only, :access_type)}
+        field={@form[:access_type]}
+        type="select"
+        label="Access type"
+        prompt="Choose…"
+        options={access_type_options()}
+        saved={"access_type" in @saved}
+      />
+      <%!-- NOTE(Claude 2026-11-04): modality is what the data is, format is how it is
          stored or delivered; the two vary independently. --%>
-    <.suggest_input
-      :if={show_field?(@only, :modalities)}
-      field={@form[:modalities]}
-      label="Modality (comma-separated)"
-      placeholder="Free text, Genes, Lab measurements"
-      suggestions={Map.get(@suggestions, :modalities, [])}
-      debounce={@debounce}
-      saved={"modalities" in @saved}
-    />
-    <.suggest_input
-      :if={show_field?(@only, :formats)}
-      field={@form[:formats]}
-      label="Format (comma-separated)"
-      placeholder="CSV.gz, Parquet, BigQuery table"
-      suggestions={Map.get(@suggestions, :formats, [])}
-      debounce={@debounce}
-      saved={"formats" in @saved}
-    />
-    <.embed_list
-      :if={show_field?(@only, :doc_links)}
-      form={@form}
-      field={:doc_links}
-      legend="Documentation"
-      add_label="Add entry"
-      saved={"doc_links" in @saved}
-    >
-      <:row :let={link}>
-        <.input
-          field={link[:kind]}
-          type="select"
-          label="Type"
-          options={[{"Link", "link"}, {"Text (e.g. README contents)", "text"}]}
-        />
-        <.input
-          field={link[:label]}
-          type="text"
-          label="Label"
-          placeholder="README"
-          phx-debounce={@debounce}
-        />
-        <%!-- NOTE(Claude 2026-11-04): the kind decides which content input is shown. --%>
-        <.input
-          :if={to_string(link[:kind].value) != "text"}
-          field={link[:url]}
-          type="url"
-          label="URL"
-          phx-debounce={@debounce}
-        />
-        <.input
-          :if={to_string(link[:kind].value) == "text"}
-          field={link[:text]}
-          type="textarea"
-          label="Text"
-          rows="8"
-          phx-debounce={@debounce}
-        />
-      </:row>
-    </.embed_list>
-    <.embed_list
-      :if={show_field?(@only, :locations)}
-      form={@form}
-      field={:locations}
-      legend="Locations"
-      add_label="Add location"
-      saved={"locations" in @saved}
-    >
-      <:row :let={location}>
-        <.input
-          field={location[:label]}
-          type="text"
-          label="Label (optional)"
-          maxlength={Location.label_max_length()}
-          phx-debounce={@debounce}
-        />
-        <.input
-          field={location[:value]}
-          type="text"
-          label="Web link, Unix path or gs:// path"
-          placeholder="https://…, /research/shared-data/… or gs://bucket/…"
-          phx-debounce={@debounce}
-        />
-      </:row>
-    </.embed_list>
-    <.csv_input
-      :if={show_field?(@only, :data_dictionary)}
-      form={@form}
-      embed={:data_dictionary}
-      label="Data dictionary (CSV: column,details ; or cells pasted from a spreadsheet)"
-      placeholder={"FINNGENID,Participant identifier\nEVENT_AGE,\"Age at event, in years\""}
-      debounce={@debounce}
-      saved={"data_dictionary" in @saved}
-    />
-    <%!-- NOTE(Claude 2026-11-16): the data quality answers, one radio group per criterion. --%>
-    <.quality_fields
-      :if={show_field?(@only, :data_quality)}
-      field={@form[:data_quality]}
-      saved={"data_quality" in @saved}
-    />
-    <.omop_radios
-      :if={show_field?(@only, :omop_integration)}
-      field={@form[:omop_integration]}
-      saved={"omop_integration" in @saved}
-    />
-    <fieldset :if={show_field?(@only, :years)} class="field-group">
-      <legend>Years coverage</legend>
-      <%!-- NOTE(Claude Opus 5.5 2026-11-18): Not applicable clears the years
+      <.suggest_input
+        :if={show_field?(@only, :modalities)}
+        field={@form[:modalities]}
+        label="Modality (comma-separated)"
+        placeholder="Free text, Genes, Lab measurements"
+        suggestions={Map.get(@suggestions, :modalities, [])}
+        debounce={@debounce}
+        saved={"modalities" in @saved}
+      />
+      <.suggest_input
+        :if={show_field?(@only, :formats)}
+        field={@form[:formats]}
+        label="Format (comma-separated)"
+        placeholder="CSV.gz, Parquet, BigQuery table"
+        suggestions={Map.get(@suggestions, :formats, [])}
+        debounce={@debounce}
+        saved={"formats" in @saved}
+      />
+      <.embed_list
+        :if={show_field?(@only, :doc_links)}
+        form={@form}
+        field={:doc_links}
+        legend="Documentation"
+        add_label="Add entry"
+        saved={"doc_links" in @saved}
+      >
+        <:row :let={link}>
+          <.input
+            field={link[:kind]}
+            type="select"
+            label="Type"
+            options={[{"Link", "link"}, {"Text (e.g. README contents)", "text"}]}
+          />
+          <.input
+            field={link[:label]}
+            type="text"
+            label="Label"
+            placeholder="README"
+            phx-debounce={@debounce}
+          />
+          <%!-- NOTE(Claude 2026-11-04): the kind decides which content input is shown. --%>
+          <.input
+            :if={to_string(link[:kind].value) != "text"}
+            field={link[:url]}
+            type="url"
+            label="URL"
+            phx-debounce={@debounce}
+          />
+          <.input
+            :if={to_string(link[:kind].value) == "text"}
+            field={link[:text]}
+            type="textarea"
+            label="Text"
+            rows="8"
+            phx-debounce={@debounce}
+          />
+        </:row>
+      </.embed_list>
+      <.embed_list
+        :if={show_field?(@only, :locations)}
+        form={@form}
+        field={:locations}
+        legend="Locations"
+        add_label="Add location"
+        saved={"locations" in @saved}
+      >
+        <:row :let={location}>
+          <.input
+            field={location[:label]}
+            type="text"
+            label="Label (optional)"
+            maxlength={Location.label_max_length()}
+            phx-debounce={@debounce}
+          />
+          <.input
+            field={location[:value]}
+            type="text"
+            label="Web link, Unix path or gs:// path"
+            placeholder="https://…, /research/shared-data/… or gs://bucket/…"
+            phx-debounce={@debounce}
+          />
+        </:row>
+      </.embed_list>
+      <.csv_input
+        :if={show_field?(@only, :data_dictionary)}
+        form={@form}
+        embed={:data_dictionary}
+        label="Data dictionary (CSV: column,details ; or cells pasted from a spreadsheet)"
+        placeholder={"FINNGENID,Participant identifier\nEVENT_AGE,\"Age at event, in years\""}
+        debounce={@debounce}
+        saved={"data_dictionary" in @saved}
+      />
+      <%!-- NOTE(Claude 2026-11-16): the data quality answers, one radio group per criterion. --%>
+      <.quality_fields
+        :if={show_field?(@only, :data_quality)}
+        field={@form[:data_quality]}
+        saved={"data_quality" in @saved}
+      />
+      <.omop_radios
+        :if={show_field?(@only, :omop_integration)}
+        field={@form[:omop_integration]}
+        saved={"omop_integration" in @saved}
+      />
+      <fieldset :if={show_field?(@only, :years)} class="field-group">
+        <legend>Years coverage</legend>
+        <%!-- NOTE(Claude Opus 5.5 2026-11-18): Not applicable clears the years
            and the counts, and disables their inputs (see
            `DatasetVersion.not_applicable_fields/0`). --%>
-      <.not_applicable_checkbox
-        form={@form}
-        name="years_coverage"
-        saved={"not_applicable" in @saved}
-      />
-      <%!-- NOTE(Claude Opus 5.5 2026-11-17): years, no longer dates. A number
+        <.not_applicable_checkbox
+          form={@form}
+          name="years_coverage"
+          saved={"not_applicable" in @saved}
+        />
+        <%!-- NOTE(Claude Opus 5.5 2026-11-17): years, no longer dates. A number
            input can be emptied by hand, so it needs no Clear button. --%>
+        <.input
+          field={@form[:coverage_start]}
+          type="number"
+          label="Start year"
+          placeholder="2013"
+          min={first_coverage_year()}
+          max={last_coverage_year()}
+          step="1"
+          phx-debounce={@debounce}
+          saved={"coverage_start" in @saved}
+          disabled={not_applicable?(@form, "years_coverage")}
+          value={unless(not_applicable?(@form, "years_coverage"), do: @form[:coverage_start].value)}
+        />
+        <.input
+          field={@form[:coverage_end]}
+          type="number"
+          label="End year"
+          placeholder="2025"
+          min={first_coverage_year()}
+          max={last_coverage_year()}
+          step="1"
+          phx-debounce={@debounce}
+          saved={"coverage_end" in @saved}
+          disabled={not_applicable?(@form, "years_coverage")}
+          value={unless(not_applicable?(@form, "years_coverage"), do: @form[:coverage_end].value)}
+        />
+        <.csv_input
+          form={@form}
+          embed={:yearly_counts}
+          label="Data points per year (CSV: year,count, or cells pasted from a spreadsheet)"
+          placeholder="2013,1200\n2014,1350"
+          debounce={@debounce}
+          saved={"yearly_counts" in @saved}
+          disabled={not_applicable?(@form, "years_coverage")}
+        />
+      </fieldset>
+      <fieldset :if={show_field?(@only, :cohort_size)} class="field-group">
+        <legend>Cohort coverage</legend>
+        <.not_applicable_checkbox form={@form} name="cohort_size" saved={"not_applicable" in @saved} />
+        <.input
+          field={@form[:cohort_size]}
+          type="number"
+          label="Individuals covered"
+          min="1"
+          phx-debounce={@debounce}
+          saved={"cohort_size" in @saved}
+          disabled={not_applicable?(@form, "cohort_size")}
+          value={unless(not_applicable?(@form, "cohort_size"), do: @form[:cohort_size].value)}
+        />
+      </fieldset>
       <.input
-        field={@form[:coverage_start]}
-        type="number"
-        label="Start year"
-        placeholder="2013"
-        min={first_coverage_year()}
-        max={last_coverage_year()}
-        step="1"
+        :if={show_field?(@only, :lead)}
+        field={@form[:lead]}
+        type="text"
+        label="Maintainer"
         phx-debounce={@debounce}
-        saved={"coverage_start" in @saved}
-        disabled={not_applicable?(@form, "years_coverage")}
-        value={unless(not_applicable?(@form, "years_coverage"), do: @form[:coverage_start].value)}
-      />
-      <.input
-        field={@form[:coverage_end]}
-        type="number"
-        label="End year"
-        placeholder="2025"
-        min={first_coverage_year()}
-        max={last_coverage_year()}
-        step="1"
-        phx-debounce={@debounce}
-        saved={"coverage_end" in @saved}
-        disabled={not_applicable?(@form, "years_coverage")}
-        value={unless(not_applicable?(@form, "years_coverage"), do: @form[:coverage_end].value)}
-      />
-      <.csv_input
-        form={@form}
-        embed={:yearly_counts}
-        label="Data points per year (CSV: year,count, or cells pasted from a spreadsheet)"
-        placeholder="2013,1200\n2014,1350"
-        debounce={@debounce}
-        saved={"yearly_counts" in @saved}
-        disabled={not_applicable?(@form, "years_coverage")}
+        saved={"lead" in @saved}
       />
     </fieldset>
-    <fieldset :if={show_field?(@only, :cohort_size)} class="field-group">
-      <legend>Cohort coverage</legend>
-      <.not_applicable_checkbox form={@form} name="cohort_size" saved={"not_applicable" in @saved} />
-      <.input
-        field={@form[:cohort_size]}
-        type="number"
-        label="Individuals covered"
-        min="1"
-        phx-debounce={@debounce}
-        saved={"cohort_size" in @saved}
-        disabled={not_applicable?(@form, "cohort_size")}
-        value={unless(not_applicable?(@form, "cohort_size"), do: @form[:cohort_size].value)}
-      />
-    </fieldset>
-    <.input
-      :if={show_field?(@only, :lead)}
-      field={@form[:lead]}
-      type="text"
-      label="Maintainer"
-      phx-debounce={@debounce}
-      saved={"lead" in @saved}
-    />
     """
   end
 

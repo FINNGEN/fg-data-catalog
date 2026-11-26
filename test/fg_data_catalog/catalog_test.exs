@@ -535,7 +535,9 @@ defmodule FGDataCatalog.CatalogTest do
     test "creates the dataset and its first version" do
       attrs = %{name: "New dataset", versions: [valid_version_attrs(%{version: "R14"})]}
 
-      assert {:ok, dataset} = Catalog.create_dataset_with_version(attrs)
+      assert {:ok, dataset} =
+               Catalog.create_dataset_with_version(attrs, owning_editor_id: user_id(:editor))
+
       # NOTE(Claude 2026-11-16): a Draft unless told otherwise.
       assert [%DatasetVersion{version: "R14", state: :draft}] = dataset.versions
       assert Catalog.list_published_datasets() == []
@@ -729,10 +731,12 @@ defmodule FGDataCatalog.CatalogTest do
         other_editor: [:read, :write, :unpublish, :archive],
         owner: [:read, :write, :unpublish, :archive]
       },
+      # NOTE(Claude-Opus-5.5 2026-11-26): a Draft is every editor's, whoever
+      # owns it. It is deleted, not archived.
       draft: %{
         visitor: [],
-        other_editor: [:read, :archive],
-        owner: [:read, :write, :publish, :archive]
+        other_editor: [:read, :write, :publish, :delete],
+        owner: [:read, :write, :publish, :delete]
       },
       archived: %{
         visitor: [],
@@ -741,7 +745,7 @@ defmodule FGDataCatalog.CatalogTest do
       }
     }
 
-    @actions [:read, :write, :publish, :unpublish, :archive, :unarchive]
+    @actions [:read, :write, :publish, :delete, :unpublish, :archive, :unarchive]
 
     for {state, actors} <- @table, {actor, allowed} <- actors, action <- @actions do
       @state state
@@ -764,13 +768,14 @@ defmodule FGDataCatalog.CatalogTest do
       end
     end
 
-    test "a version without an owning editor has no owner" do
-      version = %DatasetVersion{state: :draft, owning_editor_id: nil}
+    # NOTE(Claude-Opus-5.5 2026-11-26): every editor may still act on it.
+    test "a Draft without an owning editor is every editor's too" do
       scope = scope_fixture(:editor)
+      version = %DatasetVersion{state: :draft, owning_editor_id: nil}
 
-      refute Catalog.can?(scope, :write, version)
-      refute Catalog.can?(scope, :publish, version)
-      assert Catalog.can?(scope, :archive, version)
+      for action <- [:read, :write, :publish, :delete] do
+        assert Catalog.can?(scope, action, version)
+      end
     end
   end
 
@@ -802,22 +807,30 @@ defmodule FGDataCatalog.CatalogTest do
       assert reloaded.owning_editor_id == user_id(:other_editor)
     end
 
-    test "publish and archive leave the owner as it is", %{dataset: dataset, me: me, other: other} do
+    test "publish and archive leave the owner as it is", %{dataset: dataset, other: other} do
       draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
 
-      assert {:ok, %{state: :published}} = Catalog.publish_dataset_version(me, draft)
+      assert {:ok, %{state: :published}} = Catalog.publish_dataset_version(other, draft)
       assert {:ok, %{state: :archived}} = Catalog.archive_version(other, draft)
       assert Repo.get!(DatasetVersion, draft.id).owning_editor_id == user_id(:editor)
     end
 
-    test "taking over someone else's Draft: archive it, then unarchive it",
+    # NOTE(Claude-Opus-5.5 2026-11-26): any editor may act on someone else's
+    # Draft; its owner stays.
+    test "another editor may edit, publish or delete someone's Draft",
          %{dataset: dataset, other: other} do
       draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
 
-      assert {:error, :unauthorized} = Catalog.publish_dataset_version(other, draft)
-      assert {:ok, _} = Catalog.archive_version(other, draft)
-      assert {:ok, _} = Catalog.unarchive_version(other, draft)
-      assert {:ok, %{state: :published}} = Catalog.publish_dataset_version(other, draft)
+      assert {:ok, %{version: %{lead: "Theirs"}}} =
+               Catalog.update_dataset_row(dataset, %{}, draft, %{lead: "Theirs"}, scope: other)
+
+      assert Repo.get!(DatasetVersion, draft.id).owning_editor_id == user_id(:editor)
+      assert {:ok, _} = Catalog.delete_draft_version(other, draft)
+    end
+
+    test "a Draft is not archived", %{dataset: dataset, me: me} do
+      draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
+      assert {:error, :unauthorized} = Catalog.archive_version(me, draft)
     end
 
     test "visitors may do nothing", %{dataset: dataset} do
@@ -836,16 +849,13 @@ defmodule FGDataCatalog.CatalogTest do
     # database when the change is saved, not on the struct the page holds.
     test "the check reads the version from the database, not the given struct",
          %{dataset: dataset, me: me, other: other} do
+      # A stale Draft struct of a version since published: no Delete draft.
       draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
-      # The other editor takes it over; `draft` still shows me as its owner.
-      {:ok, _} = Catalog.archive_version(other, draft)
-      {:ok, _} = Catalog.unarchive_version(other, draft)
+      {:ok, _} = Catalog.publish_dataset_version(other, draft)
 
-      assert {:error, :unauthorized} =
-               Catalog.update_dataset_row(dataset, %{}, draft, %{lead: "Mine"}, scope: me)
-
+      assert {:error, :unauthorized} = Catalog.delete_draft_version(me, draft)
       assert {:error, :unauthorized} = Catalog.publish_dataset_version(me, draft)
-      assert %{lead: "Jane Doe", state: :draft} = Repo.get!(DatasetVersion, draft.id)
+      assert %{state: :published} = Repo.get!(DatasetVersion, draft.id)
 
       # And the other way: a stale Published struct of a version now archived.
       published = version_fixture(dataset, %{version: "P"})
@@ -858,14 +868,51 @@ defmodule FGDataCatalog.CatalogTest do
       assert {:error, :unauthorized} = Catalog.archive_version(me, published)
     end
 
-    test "a refused change records nothing in the changelog", %{dataset: dataset, other: other} do
-      draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
+    test "a refused change records nothing in the changelog", %{dataset: dataset} do
+      version = version_fixture(dataset)
       last = FGDataCatalog.Changelog.last_change_id()
 
       assert {:error, :unauthorized} =
-               Catalog.update_dataset_row(dataset, %{}, draft, %{lead: "X"}, scope: other)
+               Catalog.update_dataset_row(dataset, %{}, version, %{lead: "X"}, scope: nil)
 
       assert FGDataCatalog.Changelog.last_change_id() == last
+    end
+
+    # NOTE(Claude-Opus-5.5 2026-11-26): Delete draft.
+    test "deleting a dataset's only draft deletes the dataset too, and is revertable",
+         %{me: me} do
+      dataset = dataset_fixture(%{name: "Short-lived"})
+      draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
+
+      assert {:ok, _} = Catalog.delete_draft_version(me, draft)
+      assert Repo.get(DatasetVersion, draft.id) == nil
+      assert Repo.get(Dataset, dataset.id) == nil
+      FGDataCatalog.DataCase.assert_replayable()
+
+      [%{change_set_id: set_id} | _] = FGDataCatalog.Changelog.list_changes() |> Enum.reverse()
+      assert {:ok, _} = Catalog.revert_change_set(me, set_id)
+      assert %{state: :draft} = Repo.get!(DatasetVersion, draft.id)
+      assert %{name: "Short-lived"} = Repo.get!(Dataset, dataset.id)
+      FGDataCatalog.DataCase.assert_replayable()
+    end
+
+    test "deleting a draft keeps its dataset if it has other versions, archived ones too",
+         %{dataset: dataset, me: me, other: other} do
+      archived = version_fixture(dataset, %{version: "Old"})
+      {:ok, _} = Catalog.archive_version(me, archived)
+      draft = version_fixture(dataset, %{}, state: :draft, owning_editor_id: user_id(:editor))
+
+      assert {:ok, _} = Catalog.delete_draft_version(other, draft)
+      assert Repo.get(DatasetVersion, draft.id) == nil
+      assert Repo.get(Dataset, dataset.id)
+    end
+
+    test "a Published or Archived version is not deleted", %{dataset: dataset, me: me} do
+      published = version_fixture(dataset, %{version: "P"})
+      assert {:error, :unauthorized} = Catalog.delete_draft_version(me, published)
+      {:ok, _} = Catalog.archive_version(me, published)
+      assert {:error, :unauthorized} = Catalog.delete_draft_version(me, published)
+      assert Repo.get(DatasetVersion, published.id)
     end
 
     test "list_archived_versions/0 lists the Archived versions only",

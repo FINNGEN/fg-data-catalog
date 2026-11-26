@@ -14,7 +14,7 @@ defmodule FGDataCatalog.Catalog do
   alias FGDataCatalog.Changelog
   alias FGDataCatalog.Accounts.Scope
 
-  @actions [:read, :write, :publish, :unpublish, :archive, :unarchive]
+  @actions [:read, :write, :publish, :delete, :unpublish, :archive, :unarchive]
 
   @doc """
   Whether `scope` may do `action` with `version`: one of #{inspect(@actions)}.
@@ -22,7 +22,7 @@ defmodule FGDataCatalog.Catalog do
   | State \\ Actor | Logged out | Non-owning editor | Owning editor |
   |---|---|---|---|
   | Published | read | read, write, unpublish, archive | read, write, unpublish, archive |
-  | Draft | – | read, archive | read, write, publish, archive |
+  | Draft | – | read, write, publish, delete | read, write, publish, delete |
   | Archived | – | read, unarchive | read, unarchive |
 
   Every signed-in user is an editor (`FGDataCatalog.Accounts.Scope.editor?/1`).
@@ -40,13 +40,16 @@ defmodule FGDataCatalog.Catalog do
   defp owning_editor?(scope, %DatasetVersion{owning_editor_id: id}),
     do: id != nil and id == Scope.user_id(scope)
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): a Draft is every editor's, whoever owns
+  # it (the owner is shown, not enforced). Drafts are deleted, not archived.
+  defp allowed?(action, :draft, editor?, _owner?),
+    do: editor? and action in [:read, :write, :publish, :delete]
+
   defp allowed?(:read, :published, _editor?, _owner?), do: true
   defp allowed?(:read, _state, editor?, _owner?), do: editor?
   defp allowed?(:write, :published, editor?, _owner?), do: editor?
-  defp allowed?(:write, :draft, _editor?, owner?), do: owner?
-  defp allowed?(:publish, :draft, _editor?, owner?), do: owner?
   defp allowed?(:unpublish, :published, editor?, _owner?), do: editor?
-  defp allowed?(:archive, state, editor?, _owner?) when state in [:published, :draft], do: editor?
+  defp allowed?(:archive, :published, editor?, _owner?), do: editor?
   defp allowed?(:unarchive, :archived, editor?, _owner?), do: editor?
   defp allowed?(_action, _state, _editor?, _owner?), do: false
 
@@ -146,12 +149,35 @@ defmodule FGDataCatalog.Catalog do
   end
 
   @doc """
+  Deletes a draft `version` for good, and its dataset if it has no other
+  version (archived ones included). Recorded in the changelog, so it can be
+  reverted. Returns `{:ok, version}`, or `{:error, :unauthorized}` if `scope`
+  may not (see `can?/3`).
+  """
+  def delete_draft_version(scope, %DatasetVersion{} = version) do
+    Changelog.transact("delete draft", Scope.actor(scope), fn set ->
+      with {:ok, current} <- authorize(scope, :delete, version),
+           {:ok, deleted} <- Changelog.delete(set, current) do
+        others = from v in DatasetVersion, where: v.dataset_id == ^current.dataset_id
+
+        if Repo.exists?(others) do
+          {:ok, deleted}
+        else
+          with {:ok, _dataset} <-
+                 Changelog.delete(set, Repo.get!(Dataset, current.dataset_id)),
+               do: {:ok, deleted}
+        end
+      end
+    end)
+  end
+
+  @doc """
   Publishes a Draft `version`, making it visible to everyone. The dataset name
   and description it proposes (see `update_dataset_row/5`) are applied to its
   dataset in the same change set.
 
-  Returns `{:ok, version}`, `{:error, :unauthorized}` if `scope` may not (only
-  the owning editor may), or `{:error, changeset}` with the dataset changeset
+  Returns `{:ok, version}`, `{:error, :unauthorized}` if `scope` may not (see
+  `can?/3`), or `{:error, changeset}` with the dataset changeset
   if the proposed name is no longer valid (e.g. another dataset took it).
   """
   def publish_dataset_version(scope, %DatasetVersion{} = version) do

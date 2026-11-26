@@ -31,6 +31,7 @@ defmodule FGDataCatalogWeb.Icons do
     hero-moon-mini
     hero-pencil-square
     hero-sun-mini
+    hero-trash
     hero-x-mark
   )
 

@@ -30,7 +30,9 @@ defmodule FGDataCatalog.Changelog do
     * Schema migrations themselves: the recorded values are rewritten instead
       (see above).
     * Database cascades (`on_delete: :delete_all`): delete children through
-      `delete/2` first. Nothing deletes catalog rows today.
+      `delete/2` first. Only `Catalog.delete_draft_version/2` deletes catalog
+      rows (NOTE(Claude-Opus-5.5 2026-11-26)): the draft version, then its
+      dataset.
     * Unsaved "new dataset" drafts (`dataset_drafts`), which are not catalog data.
     * Users and their sessions (`users`, `users_tokens`), not catalog data either.
   """
