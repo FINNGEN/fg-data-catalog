@@ -207,6 +207,15 @@ defmodule FGDataCatalogWeb.CoreComponents do
     input(%{assigns | rest: Map.put(rest, :"aria-required", "true")})
   end
 
+  # NOTE(Claude-Opus-5.5 2026-11-26): `autofocus` works only on a full page
+  # load: after a live navigation (a link with `navigate`, or the catalog's N
+  # key) neither the browser nor LiveView applies it. The input is focused
+  # once LiveView mounts it too.
+  def input(%{rest: %{autofocus: true} = rest} = assigns)
+      when not is_map_key(rest, :"phx-mounted") do
+    input(%{assigns | rest: Map.put(rest, :"phx-mounted", JS.focus())})
+  end
+
   def input(%{type: "hidden"} = assigns) do
     ~H"""
     <input type="hidden" id={@id} name={@name} value={@value} {@rest} />

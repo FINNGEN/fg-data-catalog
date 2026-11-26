@@ -62,18 +62,26 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
         phx-submit="search"
         role="search"
       >
-        <.input
-          field={@search_form[:q]}
-          type="search"
-          label="Search datasets"
-          placeholder={
-            if(@can_edit,
-              do: "Name, tag, modality, format, maintainer…",
-              else: "Name, tag, modality, format…"
-            )
-          }
-          autocomplete="off"
-        />
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the / key focuses the search
+             field (see `.CatalogTable`), shown by a hint inside it, hidden
+             while it is focused or holds text. --%>
+        <div class="search-field">
+          <.input
+            field={@search_form[:q]}
+            type="search"
+            label="Search datasets"
+            placeholder={
+              if(@can_edit,
+                do: "Name, tag, modality, format, maintainer…",
+                else: "Name, tag, modality, format…"
+              )
+            }
+            autocomplete="off"
+            aria-keyshortcuts="/"
+            title="Search datasets (/)"
+          />
+          <kbd id="search-shortcut" class="search-shortcut" aria-hidden="true">/</kbd>
+        </div>
         <%!-- NOTE(Claude 2026-11-12): the tag filter, kept by a search sent
              without JavaScript. --%>
         <input :for={tag <- @tags} type="hidden" name="tags[]" value={tag} />
@@ -143,8 +151,19 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
              own above, at the right (see `.table-meta`). An unsaved new
              dataset from an earlier visit is kept, and restored when the form
              page is opened again. --%>
-          <.link :if={@can_edit} id="add-dataset" class="add-dataset" navigate={~p"/datasets/new"}>
+          <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the N key opens it too (see
+             `.CatalogTable`); the key is told to screen readers by
+             `aria-keyshortcuts`, not by the hidden `<kbd>`. --%>
+          <.link
+            :if={@can_edit}
+            id="add-dataset"
+            class="add-dataset"
+            navigate={~p"/datasets/new"}
+            aria-keyshortcuts="N"
+            title={if(@has_draft, do: "Continue adding dataset (N)", else: "Add missing dataset (N)")}
+          >
             {if @has_draft, do: "Continue adding dataset", else: "Add missing dataset"}
+            <kbd aria-hidden="true">N</kbd>
           </.link>
         </div>
 
@@ -638,16 +657,42 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
           // actions popover is open, but Escape closes it (the browser does, for
           // a native one) and gives the focus back to its button; the next
           // Escape leaves Editor mode.
+          // NOTE(Claude-Opus-5.5 2026-11-26): / focuses the search field, for
+          // everyone (the only key for visitors); N opens "Add missing
+          // dataset", for editors, but not while an editor is open (its
+          // unsaved value would be lost). `/` is matched by `e.key`, so that
+          // it works on layouts where it needs Shift (e.g. Finnish, Shift+7).
           keydown(e) {
-            if (this.popovers.keydown(e) || !this.canEdit()) return
+            if (this.popovers.keydown(e)) return
             if (e.ctrlKey || e.metaKey || e.altKey) return
             const t = e.target
+            // NOTE(Claude-Opus-5.5 2026-11-26): Escape in the search field
+            // takes the focus out of it (for the page's keys to work again),
+            // keeping its text: the browser's own Escape, which clears it, is
+            // prevented.
+            if (e.key === "Escape" && t.matches && t.matches("#search-form input[type=search]")) {
+              e.preventDefault()
+              return t.blur()
+            }
             if (t.closest && t.closest("input, textarea, select, [contenteditable], dialog")) return
             if (this.dialogOpen()) return
             const key = e.key
+            if (key === "/") {
+              e.preventDefault()
+              return this.focusSearch()
+            }
+            if (!this.canEdit()) return
             if (key === "m" || key === "M") {
               if (!e.repeat) this.pushEvent("toggle_editor_mode", {})
               return e.preventDefault()
+            }
+            if ((key === "n" || key === "N") && !this.inlineEditor()) {
+              const add = document.getElementById("add-dataset")
+              if (!add) return
+              e.preventDefault()
+              // A click, so that LiveView navigates as for the link itself.
+              if (!e.repeat) add.click()
+              return
             }
             if (!this.editorMode() || this.inlineEditor()) return
             if (key === "Escape") return this.pushEvent("leave_editor_mode", {})
@@ -675,6 +720,14 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
             e.preventDefault()
             this.moveTo(this.next(focused, key))
           },
+          // NOTE(Claude-Opus-5.5 2026-11-26): its text selected, so that typing
+          // replaces it; scrolled into view (the page may be scrolled down).
+          focusSearch() {
+            const input = document.querySelector("#search-form input[type=search]")
+            if (!input) return
+            input.focus()
+            input.select()
+          },
           async copyLocation(button) {
             const path = document.getElementById(button.dataset.copyLocation)
             const status = document.getElementById(button.dataset.copyStatus)
@@ -693,6 +746,15 @@ defmodule FGDataCatalogWeb.DatasetLive.Index do
           },
           click(e) {
             const t = e.target
+            // NOTE(Claude-Opus-5.5 2026-11-26): leaving by "Add missing
+            // dataset" (a click, or N), noted for that page's Escape, which
+            // then goes back here with the browser's Back (see `.EscapeBack`
+            // in `DatasetLive.Form`).
+            // Not a click that opens a new tab or window.
+            const plain = e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+            if (plain && t.closest && t.closest("#add-dataset")) {
+              try { sessionStorage.setItem("fgdc:add-from-catalog", String(Date.now())) } catch {}
+            }
             const copy = t.closest("[data-copy-location]")
             if (copy && this.el.contains(copy)) this.copyLocation(copy)
             if (this.popovers.click(e) || !this.canEdit()) return

@@ -26,7 +26,91 @@ defmodule FGDataCatalogWeb.DatasetLive.Form do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="form-page">
-        <.link id="back-to-catalog" navigate={~p"/"} class="back-link">← Back to the catalog</.link>
+        <%!-- NOTE(Claude-Opus-5.5 2026-11-26): on the new dataset page, Escape
+             closes a suggestion list, then leaves the focused field, then goes
+             back to the catalog (`.EscapeBack`, on the key's hint: a hook
+             name is resolved only when written as a literal). --%>
+        <.link
+          id="back-to-catalog"
+          navigate={~p"/"}
+          class="back-link"
+          aria-keyshortcuts={@live_action == :new && "Escape"}
+          title={@live_action == :new && "Back to the catalog (Esc)"}
+        >
+          ← Back to the catalog
+          <kbd
+            :if={@live_action == :new}
+            id="back-shortcut"
+            phx-hook=".EscapeBack"
+            aria-hidden="true"
+          >
+            Esc
+          </kbd>
+        </.link>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".EscapeBack">
+          // NOTE(Claude-Opus-5.5 2026-11-26): Escape, in this order: a
+          // suggestion list closes (its own handler, which prevents the
+          // default: seen here as `defaultPrevented`); else a focused field
+          // loses the focus (which also sends its debounced value, so the
+          // draft is up to date); else the page goes back to the catalog.
+          // With the browser's Back if this page was opened from the catalog
+          // (`fgdcFromCatalog` in its history entry, see `stampFromCatalog`),
+          // so that the catalog's search, tags and scroll come back; else as
+          // the link does. Not on a held key, so that holding Escape does not
+          // leave the field and the page at once.
+          export default {
+            mounted() {
+              this.stampFromCatalog()
+              this.onKeydown = e => this.keydown(e)
+              window.addEventListener("keydown", this.onKeydown)
+            },
+            destroyed() {
+              window.removeEventListener("keydown", this.onKeydown)
+              window.removeEventListener("phx:navigate", this.onNavigate)
+            },
+            keydown(e) {
+              if (e.key !== "Escape" || e.defaultPrevented || e.repeat || e.isComposing) return
+              if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
+              if (document.querySelector("dialog[open]")) return
+              const active = document.activeElement
+              if (active && active.matches("input, textarea, select, [contenteditable]")) {
+                e.preventDefault()
+                return active.blur()
+              }
+              e.preventDefault()
+              if (history.state && history.state.fgdcFromCatalog) history.back()
+              else this.el.closest("a").click()
+            },
+            // The catalog notes, as it is left by "Add missing dataset", when
+            // (`fgdc:add-from-catalog`, see `.CatalogTable`). Read once here,
+            // and kept in this page's history entry, which outlives a reload
+            // or a reconnection. The entry is pushed by LiveView around this
+            // mount, hence the wait for it: this page's path, or
+            // `phx:navigate`.
+            stampFromCatalog() {
+              const key = "fgdc:add-from-catalog"
+              const at = Number(sessionStorage.getItem(key))
+              sessionStorage.removeItem(key)
+              // A note older than a few seconds is from a navigation that did
+              // not end here.
+              if (!at || Date.now() - at > 10000) return
+              const path = location.pathname
+              const stamp = () => {
+                if (location.pathname !== "/datasets/new") return false
+                history.replaceState({ ...history.state, fgdcFromCatalog: true }, "")
+                return true
+              }
+              if (path === "/datasets/new" && history.state && history.state.type === "redirect") {
+                stamp()
+              } else {
+                this.onNavigate = () => {
+                  if (stamp()) window.removeEventListener("phx:navigate", this.onNavigate)
+                }
+                window.addEventListener("phx:navigate", this.onNavigate)
+              }
+            }
+          }
+        </script>
 
         <%= cond do %>
           <% @live_action == :new -> %>

@@ -469,6 +469,14 @@ input:is([type="number"], [type="date"]),
   margin-top: 1rem;
 }
 
+/* NOTE(Claude-Opus-5.5 2026-11-26): the Escape key's hint, on the new dataset
+ * page, not underlined with the link's text. */
+.back-link kbd {
+  display: inline-block;
+  margin-left: 0.25rem;
+  color: var(--color-muted);
+}
+
 /* Buttons (core `<.button>`, plus plain buttons) */
 
 button,
@@ -743,8 +751,32 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   padding: 1rem 1rem 0.25rem;
 }
 
-.search-form .field {
+/* NOTE(Claude-Opus-5.5 2026-11-26): the field in a box of its own (was
+ * `.search-form .field`), which holds the / key's hint too. */
+.search-field {
+  position: relative;
   width: min(28rem, 100%);
+}
+
+.search-field .input {
+  width: 100%;
+  padding-right: 2rem;
+}
+
+/* NOTE(Claude-Opus-5.5 2026-11-26): the / key's hint, at the right end of the
+ * field (its last box: the search has no errors), out of the pointer's way;
+ * hidden while the field is focused or holds text, where it would sit under
+ * the browser's clear button. */
+.search-shortcut {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  pointer-events: none;
+  color: var(--color-muted);
+}
+
+.search-field:has(.input:focus, .input:not(:placeholder-shown)) .search-shortcut {
+  display: none;
 }
 
 .search-count {
@@ -813,6 +845,14 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   white-space: nowrap;
 }
 
+/* NOTE(Claude-Opus-5.5 2026-11-26): the N key's hint, not underlined with the
+ * link's text. */
+.add-dataset kbd {
+  display: inline-block;
+  margin-left: 0.25rem;
+  color: var(--color-muted);
+}
+
 .quick-edit-hint {
   margin: 0;
   color: var(--color-muted);
@@ -862,7 +902,9 @@ label:has(> :is(.input, .select, .textarea):disabled) {
   border-color: var(--color-accent);
 }
 
-:is(.quick-edit-hint, .editor-mode-toggle) kbd {
+/* NOTE(Claude-Opus-5.5 2026-11-26): and the search, Add dataset and Back to
+ * the catalog hints. */
+:is(.quick-edit-hint, .editor-mode-toggle, .add-dataset, .search-field, .back-link) kbd {
   padding: 0 0.3125rem;
   font-size: 0.75rem;
   border: 1px solid var(--color-rule-strong);

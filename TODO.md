@@ -1,9 +1,5 @@
 # TODO
 
-- [ ] Add keyboard shortcuts:
-  - [ ] Focus search
-  - [ ] Add dataset
-
 - [ ] Improvements to Location:
   - [ ] only possible names: Sandbox, GS bucket, Web
   - [ ] There is a direct 1:1 mapping between the Sandbox path and the GS bucket path, so maybe there is a way to have only one entry but have "copy Sanbox path" and "copy as gs://"
@@ -20,6 +16,16 @@
 - [ ] Think if a "My draft" badge would make things more intuitive.
   - For now somewhat counter-intuitive that a draft I own looks similar to other drafts for others, but others don't have the same actions (e.g. edit) on my draft.
   - Either make all drafts the same (no "my draft"), no owning anymore; or change to My draft and have an intermediate "internal release" (need better name) action that would make the draft a "shared draft"
+
+- [ ] Add inline help (behing a (?) icon, or marked with special underline) where it makes sense.
+  For example on "OMOP-mapped".
+
+- [ ] Environments field: use same suggestion behavior as Tags.
+
+- [ ] Add version page: change behavior to save as draft as the user fills the page. 
+  Currently nothing is saved until the user hits Submit, which is not consistent with the other pages.
+
+- [ ] Date input fields: change `<input>` min to 2016 and max to a current year + 1.
 
 ## Follow-ups
 
