@@ -13,6 +13,11 @@ defmodule FGDataCatalogWeb.ChangelogLive do
   (`?version=12&actor=...`): a version's History link in the catalog opens it
   filtered to that version and its dataset's row, whose name and description
   the catalog row shows too (`version` replaces `table` and `row`).
+
+  `?dataset=5` filters to a dataset's row and all its versions, and `after=345`
+  to the change sets newer than #345: a revert refused because a row changed
+  since links to these later changes (`after` with `table` and `row`, or with
+  `dataset`, whose versions may block the revert of its insertion).
   """
   # NOTE(Claude 2026-11-05): added as a readable view of `FGDataCatalog.Changelog`.
   use FGDataCatalogWeb, :live_view
@@ -65,6 +70,8 @@ defmodule FGDataCatalogWeb.ChangelogLive do
           />
           <input :if={@filters.row} type="hidden" name="row" value={@filters.row} />
           <input :if={@filters.version} type="hidden" name="version" value={@filters.version} />
+          <input :if={@filters.dataset} type="hidden" name="dataset" value={@filters.dataset} />
+          <input :if={@filters.after} type="hidden" name="after" value={@filters.after} />
           <p :if={@filters.row} id="row-filter" class="row-filter">
             Row: {@row_filter_name || "##{@filters.row}"}
             <.link id="clear-row-filter" patch={changelog_path(%{@filters | row: nil})}>
@@ -75,6 +82,21 @@ defmodule FGDataCatalogWeb.ChangelogLive do
             Row: {@row_filter_name || "Version ##{@filters.version}"} and its dataset
             <.link id="clear-row-filter" patch={changelog_path(%{@filters | version: nil})}>
               Show all rows
+            </.link>
+          </p>
+          <%!-- NOTE(Claude-Opus-5.5 2026-11-26): a dataset and its versions. --%>
+          <p :if={@filters.dataset} id="row-filter" class="row-filter">
+            Row: {@row_filter_name || "Dataset ##{@filters.dataset}"} and its versions
+            <.link id="clear-row-filter" patch={changelog_path(%{@filters | dataset: nil})}>
+              Show all rows
+            </.link>
+          </p>
+          <%!-- NOTE(Claude-Opus-5.5 2026-11-26): the changes made after a change
+               set (see `revert_error/2`). --%>
+          <p :if={@filters.after} id="after-filter" class="row-filter">
+            After change set #{@filters.after}
+            <.link id="clear-after-filter" patch={changelog_path(%{@filters | after: nil})}>
+              Show older changes too
             </.link>
           </p>
           <.link
@@ -162,7 +184,8 @@ defmodule FGDataCatalogWeb.ChangelogLive do
                       @filters
                       | table: row.change.table_name,
                         row: row.change.record_id,
-                        version: nil
+                        version: nil,
+                        dataset: nil
                     })
                   }
                 >
@@ -277,7 +300,7 @@ defmodule FGDataCatalogWeb.ChangelogLive do
   def handle_event("filter", params, socket) do
     filters =
       params
-      |> Map.take(["table", "actor", "row", "version"])
+      |> Map.take(["table", "actor", "row", "version", "dataset", "after"])
       |> parse_filters()
 
     {:noreply, push_patch(socket, to: changelog_path(filters))}
@@ -287,12 +310,15 @@ defmodule FGDataCatalogWeb.ChangelogLive do
   # sets of a run of live edits ("12,13,14").
   def handle_event("revert", %{"ids" => ids}, socket) do
     socket =
-      with {:ok, ids} <- parse_ids(ids),
-           {:ok, _set_id} <- Catalog.revert_change_set(socket.assigns.current_scope, ids) do
-        put_flash(socket, :info, reverted_text(ids))
-      else
-        {:error, reason} -> put_flash(socket, :error, revert_error(reason))
-        _ -> put_flash(socket, :error, revert_error(:not_found))
+      case parse_ids(ids) do
+        {:ok, ids} ->
+          case Catalog.revert_change_set(socket.assigns.current_scope, ids) do
+            {:ok, _set_id} -> put_flash(socket, :info, reverted_text(ids))
+            {:error, reason} -> put_flash(socket, :error, revert_error(reason, ids))
+          end
+
+        :error ->
+          put_flash(socket, :error, revert_error(:not_found, []))
       end
 
     {:noreply, socket}
@@ -370,25 +396,53 @@ defmodule FGDataCatalogWeb.ChangelogLive do
   end
 
   # NOTE(Claude 2026-11-06): why a change set could not be reverted.
-  defp revert_error({:conflict, change}) do
+  # NOTE(Claude-Opus-5.5 2026-11-26): "the later changes" links to the changes
+  # of the row made after the change set(s) `ids`, without the other filters
+  # (they may hide some): of a dataset's versions too, as a version added since
+  # blocks the revert of the dataset's insertion. Safe HTML, not a template: a
+  # flash may be serialized.
+  defp revert_error({:conflict, change}, ids) do
     name = Changelog.row_names([change])[{change.table_name, change.record_id}]
-    row = name || "#{table_label(change.table_name)} ##{change.record_id}"
 
-    "Not reverted: #{row} has changed since. Revert the later changes first."
+    assigns = %{
+      row: name || "#{table_label(change.table_name)} ##{change.record_id}",
+      path: later_changes_path(change, List.last(ids))
+    }
+
+    rendered = ~H"""
+    Not reverted: {@row} has changed since. Revert the
+    <.link id="later-changes" patch={@path}>later changes</.link>
+    first.
+    """
+
+    {:safe, Phoenix.HTML.Safe.to_iodata(rendered)}
   end
 
-  defp revert_error(:unauthorized), do: "Only editors can revert changes."
-  defp revert_error(:not_found), do: "That change set was not found."
-  defp revert_error({:database, _message}), do: "Not reverted: the database refused it."
+  defp revert_error(:unauthorized, _ids), do: "Only editors can revert changes."
+  defp revert_error(:not_found, _ids), do: "That change set was not found."
+  defp revert_error({:database, _message}, _ids), do: "Not reverted: the database refused it."
+
+  defp later_changes_path(change, set_id) do
+    filters = %{table: nil, row: nil, version: nil, dataset: nil, after: set_id, actor: nil}
+
+    case change.table_name do
+      "datasets" -> changelog_path(%{filters | dataset: change.record_id})
+      table -> changelog_path(%{filters | table: table, row: change.record_id})
+    end
+  end
 
   # NOTE(Claude 2026-11-06): unknown tables and malformed rows are ignored.
   # NOTE(Claude Opus 5.5 2026-11-19): and malformed versions; a version replaces
   # the table and the row (it spans two tables).
+  # NOTE(Claude-Opus-5.5 2026-11-26): so does a dataset (with its versions);
+  # `after` goes with any of them.
   defp parse_filters(params) do
     table = params["table"]
     table = if table in Enum.map(@tables, &elem(&1, 0)), do: table
     row = parse_id(params["row"])
     version = parse_id(params["version"])
+    dataset = parse_id(params["dataset"])
+    after_set = parse_id(params["after"])
 
     actor =
       case params["actor"] do
@@ -396,9 +450,12 @@ defmodule FGDataCatalogWeb.ChangelogLive do
         actor -> actor
       end
 
-    if version,
-      do: %{table: nil, row: nil, version: version, actor: actor},
-      else: %{table: table, row: row, version: nil, actor: actor}
+    cond do
+      version -> %{table: nil, row: nil, version: version, dataset: nil}
+      dataset -> %{table: nil, row: nil, version: nil, dataset: dataset}
+      true -> %{table: table, row: row, version: nil, dataset: nil}
+    end
+    |> Map.merge(%{after: after_set, actor: actor})
   end
 
   defp parse_id(text) do
@@ -426,6 +483,8 @@ defmodule FGDataCatalogWeb.ChangelogLive do
       table: filters.table,
       record_id: filters.row,
       version: filters.version,
+      dataset: filters.dataset,
+      after_set: filters.after,
       actor: if(filters.actor == @no_actor, do: :none, else: filters.actor)
     ]
   end
@@ -454,6 +513,9 @@ defmodule FGDataCatalogWeb.ChangelogLive do
   # one (`nil` if none is listed).
   defp row_filter_name(%{version: id}, changes) when is_integer(id),
     do: row_name("dataset_versions", id, changes)
+
+  defp row_filter_name(%{dataset: id}, changes) when is_integer(id),
+    do: row_name("datasets", id, changes)
 
   defp row_filter_name(%{table: table, row: id}, changes)
        when is_binary(table) and is_integer(id),

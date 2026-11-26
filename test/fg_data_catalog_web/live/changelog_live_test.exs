@@ -253,6 +253,51 @@ defmodule FGDataCatalogWeb.ChangelogLiveTest do
     # The same change set again: its row has changed since (it was reverted).
     view |> element("#revert-set-#{set_id}") |> render_click()
     assert has_element?(view, "#flash-error", "Logged data R1 has changed since")
+
+    # NOTE(Claude-Opus-5.5 2026-11-26): "later changes" lists the row's changes
+    # made after it, whatever the filters.
+    view |> element("#flash-error #later-changes") |> render_click()
+
+    assert_patch(
+      view,
+      ~p"/changelog?#{%{"after" => set_id, "row" => version.id, "table" => "dataset_versions"}}"
+    )
+
+    assert has_element?(view, "#after-filter", "After change set ##{set_id}")
+    assert has_element?(view, "#changes tr.first-of-set td", "revert change set ##{set_id}")
+    refute has_element?(view, "#changes tr.first-of-set td", "archive version")
+
+    view |> element("#clear-after-filter") |> render_click()
+    assert has_element?(view, "#changes tr.first-of-set td", "archive version")
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): a version added since blocks the revert
+  # of its dataset's insertion: the link lists the dataset's versions too.
+  test "links a refused revert of a dataset to its later versions", %{
+    conn: conn,
+    version: version
+  } do
+    dataset_set_id =
+      FGDataCatalog.Repo.one(
+        from c in FGDataCatalog.Changelog.Change,
+          where: c.table_name == "datasets" and c.record_id == ^version.dataset_id,
+          select: min(c.change_set_id)
+      )
+
+    {:ok, view, _html} = live(conn, ~p"/changelog?actor=nobody")
+    render_click(view, "revert", %{"ids" => "#{dataset_set_id}"})
+    assert has_element?(view, "#flash-error", "Logged data has changed since")
+
+    view |> element("#flash-error #later-changes") |> render_click()
+
+    assert_patch(
+      view,
+      ~p"/changelog?#{%{"after" => dataset_set_id, "dataset" => version.dataset_id}}"
+    )
+
+    assert has_element?(view, "#row-filter", "Logged data and its versions")
+    assert has_element?(view, "#changes .row-filter-link", "Logged data R1")
+    refute has_element?(view, "#changes .row-ref", "Datasets")
   end
 
   defp last_set_id do

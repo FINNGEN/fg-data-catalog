@@ -361,8 +361,10 @@ defmodule FGDataCatalog.Changelog do
   Filters (each optional): `:table` (a table name), `:record_id` (a row of that
   table, or of any table without `:table`), `:version` (a dataset version's id:
   the changes of that version and of its dataset's row, not of its other
-  versions; also for a deleted version) and `:actor` (the change set's actor;
-  `:none` for change sets without one).
+  versions; also for a deleted version), `:dataset` (a dataset's id: the
+  changes of its row and of all its versions, also of deleted ones),
+  `:after_set` (only the changes of change sets newer than this one) and
+  `:actor` (the change set's actor; `:none` for change sets without one).
   """
   def list_recent_changes(opts \\ []) do
     query =
@@ -379,6 +381,12 @@ defmodule FGDataCatalog.Changelog do
     query = if table = opts[:table], do: where(query, [c], c.table_name == ^table), else: query
     query = if id = opts[:record_id], do: where(query, [c], c.record_id == ^id), else: query
     query = if id = opts[:version], do: where(query, ^version_changes(id)), else: query
+    # NOTE(Claude-Opus-5.5 2026-11-26): what changed after a change set that
+    # could not be reverted (see `revert/2`).
+    query = if id = opts[:dataset], do: where(query, ^dataset_changes(id)), else: query
+
+    query =
+      if id = opts[:after_set], do: where(query, [c], c.change_set_id > ^id), else: query
 
     query =
       case opts[:actor] do
@@ -405,6 +413,31 @@ defmodule FGDataCatalog.Changelog do
       nil -> version
       id -> dynamic([c], ^version or (c.table_name == "datasets" and c.record_id == ^id))
     end
+  end
+
+  # NOTE(Claude-Opus-5.5 2026-11-26): a dataset's row and its versions, current
+  # or deleted (a version's dataset is recorded when it is inserted or deleted,
+  # and never changes).
+  defp dataset_changes(dataset_id) do
+    current = from(v in DatasetVersion, where: v.dataset_id == ^dataset_id, select: v.id)
+
+    recorded =
+      from(c in Change,
+        where:
+          c.table_name == "dataset_versions" and
+            (fragment("json_extract(?, '$.dataset_id')", c.new_values) == ^dataset_id or
+               fragment("json_extract(?, '$.dataset_id')", c.old_values) == ^dataset_id),
+        distinct: true,
+        select: c.record_id
+      )
+
+    version_ids = Enum.uniq(Repo.all(current) ++ Repo.all(recorded))
+
+    dynamic(
+      [c],
+      (c.table_name == "datasets" and c.record_id == ^dataset_id) or
+        (c.table_name == "dataset_versions" and c.record_id in ^version_ids)
+    )
   end
 
   # NOTE(Claude Opus 5.5 2026-11-19): from the version's row, or from its
